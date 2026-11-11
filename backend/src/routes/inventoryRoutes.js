@@ -1,0 +1,13 @@
+const express = require('express');
+const controller = require('../controllers/inventoryController');
+const { authenticate } = require('../middleware/authMiddleware');
+const { requireRole } = require('../middleware/roleMiddleware');
+const { asyncHandler } = require('../utils/errorHandler');
+const router = express.Router();
+router.use(authenticate);
+router.get('/', asyncHandler(controller.inventory));
+router.get('/transactions', asyncHandler(controller.transactions));
+router.post('/', requireRole('OWNER', 'CASHIER'), asyncHandler(controller.importStock));
+router.post('/import', requireRole('CASHIER'), asyncHandler(controller.importStock));
+router.post('/export', requireRole('CASHIER'), asyncHandler(controller.exportStock));
+module.exports = router;
