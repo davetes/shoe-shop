@@ -5,7 +5,6 @@ import { clearSession, getUser } from '../../lib/auth';
 
 const links = [
   { href: '/dashboard', label: 'Dashboard' },
-  { href: '/dashboard/reports', label: 'Reports' },
   { href: '/dashboard/inventory', label: 'Inventory' },
   { href: '/dashboard/import', label: 'Add stock' },
   { href: '/dashboard/cashiers', label: 'Cashiers' },
