@@ -65,4 +65,21 @@ async function exportStock(req, res) {
   }
 }
 
-module.exports = { inventory, transactions, importStock, exportStock };
+async function updateStock(req, res) {
+  const storeId = permittedStore(req, req.body.storeId);
+  const productId = Number(req.params.productId);
+  const quantity = Number(req.body.quantity);
+  if (!storeId || !Number.isInteger(productId) || !Number.isInteger(quantity) || quantity < 0) {
+    throw httpError('A store, product, and non-negative integer quantity are required');
+  }
+  const result = await db.query(
+    `UPDATE inventory SET quantity = $1, updated_at = NOW()
+     WHERE store_id = $2 AND product_id = $3
+     RETURNING store_id, product_id, quantity`,
+    [quantity, storeId, productId]
+  );
+  if (!result.rows[0]) throw httpError('Shoe is not stocked in this store', 404);
+  res.json(result.rows[0]);
+}
+
+module.exports = { inventory, transactions, importStock, exportStock, updateStock };
