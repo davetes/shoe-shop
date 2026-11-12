@@ -1,5 +1,8 @@
+'use client';
 import SalesHistory from '../../../components/cashier/SalesHistory';
+import { useLanguage } from '../../../lib/language';
 
 export default function CashierHistoryPage() {
-  return <main><h1 className="mb-6 text-3xl font-bold">My sales</h1><SalesHistory /></main>;
+  const { t } = useLanguage();
+  return <main><h1 className="mb-6 text-3xl font-bold">{t('My sales')}</h1><SalesHistory /></main>;
 }

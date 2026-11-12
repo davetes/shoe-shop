@@ -3,10 +3,12 @@ import { useEffect, useState } from 'react';
 import api from '../../../lib/api';
 import Card from '../../../components/ui/Card';
 import Button from '../../../components/ui/Button';
+import { useLanguage } from '../../../lib/language';
 
 const emptyForm = { fullName: '', email: '', password: '', storeId: '1' };
 
 export default function CashiersPage() {
+  const { t } = useLanguage();
   const [cashiers, setCashiers] = useState([]);
   const [stores, setStores] = useState([]);
   const [sales, setSales] = useState([]);
@@ -82,43 +84,43 @@ export default function CashiersPage() {
   }, { total: 0, count: 0, CASH: 0, BANK_TRANSFER: 0, products: {} });
   const productAnalysis = Object.entries(analysis.products).sort(([, first], [, second]) => second.quantity - first.quantity);
   return <main className="space-y-6">
-    <div><h1 className="text-3xl font-bold">Cashier management</h1><p className="text-slate-600">View cashier details, sales, and account access.</p></div>
+    <div><h1 className="text-3xl font-bold">{t('Cashier management')}</h1><p className="text-slate-600">{t('View cashier details, sales, and account access.')}</p></div>
     <Card title="Cashiers">
-      <div className="mb-4 flex items-center justify-between"><p className="text-sm text-slate-500">Click a cashier to view their details and sales.</p><button className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700" type="button" onClick={() => setShowCreate(!showCreate)}>{showCreate ? 'Hide form' : '+ Create cashier'}</button></div>
+      <div className="mb-4 flex items-center justify-between"><p className="text-sm text-slate-500">{t('Click a cashier to view their details and sales.')}</p><button className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700" type="button" onClick={() => setShowCreate(!showCreate)}>{t(showCreate ? 'Hide form' : '+ Create cashier')}</button></div>
       {showCreate && <form onSubmit={createCashier} className="mb-5 grid gap-3 rounded-lg bg-slate-50 p-4 md:grid-cols-5">
-        <label className="text-sm font-medium text-slate-700">Full name<input className="mt-1 w-full rounded border p-2 font-normal" required value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} /></label>
-        <label className="text-sm font-medium text-slate-700">Email<input className="mt-1 w-full rounded border p-2 font-normal" required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></label>
-        <label className="text-sm font-medium text-slate-700">Temporary password<input className="mt-1 w-full rounded border p-2 font-normal" required minLength="6" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} /></label>
-        <label className="text-sm font-medium text-slate-700">Store<select className="mt-1 w-full rounded border p-2 font-normal" value={form.storeId} onChange={(e) => setForm({ ...form, storeId: e.target.value })}>{stores.map((store) => <option key={store.id} value={store.id}>{store.name}</option>)}</select></label>
-        <div className="flex items-end"><Button>Create account</Button></div>
+        <label className="text-sm font-medium text-slate-700">{t('Full name')}<input className="mt-1 w-full rounded border p-2 font-normal" required value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} /></label>
+        <label className="text-sm font-medium text-slate-700">{t('Email')}<input className="mt-1 w-full rounded border p-2 font-normal" required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></label>
+        <label className="text-sm font-medium text-slate-700">{t('Temporary password')}<input className="mt-1 w-full rounded border p-2 font-normal" required minLength="6" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} /></label>
+        <label className="text-sm font-medium text-slate-700">{t('Store')}<select className="mt-1 w-full rounded border p-2 font-normal" value={form.storeId} onChange={(e) => setForm({ ...form, storeId: e.target.value })}>{stores.map((store) => <option key={store.id} value={store.id}>{store.name}</option>)}</select></label>
+        <div className="flex items-end"><Button>{t('Create account')}</Button></div>
       </form>}
-      {!cashiers.length ? <p className="text-sm text-slate-500">No cashiers found.</p> : <div className="overflow-auto"><table className="w-full text-left text-sm"><thead className="text-xs uppercase text-slate-500"><tr className="border-b"><th className="whitespace-nowrap p-3">Name</th><th className="whitespace-nowrap p-3">Email</th><th className="whitespace-nowrap p-3">Store</th><th className="whitespace-nowrap p-3">Action</th></tr></thead><tbody>{cashiers.map((cashier) => <tr className={`cursor-pointer border-b last:border-0 hover:bg-slate-50 ${cashier.id === selectedCashierId ? 'bg-blue-50' : ''}`} key={cashier.id} onClick={() => setSelectedCashierId(cashier.id)}><td className="whitespace-nowrap p-3 font-medium">{cashier.full_name}</td><td className="whitespace-nowrap p-3">{cashier.email}</td><td className="whitespace-nowrap p-3">{cashier.store_name}</td><td className="whitespace-nowrap p-3"><div className="flex gap-3 whitespace-nowrap"><button className="font-medium text-blue-700 underline" type="button" onClick={(event) => { event.stopPropagation(); setSelectedCashierId(cashier.id); }}>View details</button><button className="font-medium text-amber-700 underline" type="button" onClick={(event) => { event.stopPropagation(); setSelectedCashierId(cashier.id); setAccountForm({ fullName: cashier.full_name, email: cashier.email, password: '' }); setShowReset(true); }}>Edit account</button></div></td></tr>)}</tbody></table></div>}
+      {!cashiers.length ? <p className="text-sm text-slate-500">{t('No cashiers found.')}</p> : <div className="overflow-auto"><table className="w-full text-left text-sm"><thead className="text-xs uppercase text-slate-500"><tr className="border-b"><th className="whitespace-nowrap p-3">{t('Name')}</th><th className="whitespace-nowrap p-3">{t('Email')}</th><th className="whitespace-nowrap p-3">{t('Store')}</th><th className="whitespace-nowrap p-3">{t('Action')}</th></tr></thead><tbody>{cashiers.map((cashier) => <tr className={`cursor-pointer border-b last:border-0 hover:bg-slate-50 ${cashier.id === selectedCashierId ? 'bg-blue-50' : ''}`} key={cashier.id} onClick={() => setSelectedCashierId(cashier.id)}><td className="whitespace-nowrap p-3 font-medium">{cashier.full_name}</td><td className="whitespace-nowrap p-3">{cashier.email}</td><td className="whitespace-nowrap p-3">{cashier.store_name}</td><td className="whitespace-nowrap p-3"><div className="flex gap-3 whitespace-nowrap"><button className="font-medium text-blue-700 underline" type="button" onClick={(event) => { event.stopPropagation(); setSelectedCashierId(cashier.id); }}>{t('View details')}</button><button className="font-medium text-amber-700 underline" type="button" onClick={(event) => { event.stopPropagation(); setSelectedCashierId(cashier.id); setAccountForm({ fullName: cashier.full_name, email: cashier.email, password: '' }); setShowReset(true); }}>{t('Edit account')}</button></div></td></tr>)}</tbody></table></div>}
     </Card>
-    <Card title={`${selectedCashier?.full_name || 'Cashier'} sales`}>
+    <Card title={`${selectedCashier?.full_name || t('Cashier')} ${t('sales')}`}>
       <form className="mb-4 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-end gap-2 rounded-lg bg-slate-50 p-3" onSubmit={(event) => { event.preventDefault(); loadSales(); }}>
-        <label className="min-w-0 whitespace-nowrap text-sm">From<input className="mt-1 block min-w-0 w-full rounded border p-2 text-xs" type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} /></label>
-        <label className="min-w-0 whitespace-nowrap text-sm">To<input className="mt-1 block min-w-0 w-full rounded border p-2 text-xs" type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} /></label>
+        <label className="min-w-0 whitespace-nowrap text-sm">{t('From')}<input className="mt-1 block min-w-0 w-full rounded border p-2 text-xs" type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} /></label>
+        <label className="min-w-0 whitespace-nowrap text-sm">{t('To')}<input className="mt-1 block min-w-0 w-full rounded border p-2 text-xs" type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} /></label>
       </form>
       <div className="mb-4">
-        <h3 className="mb-2 text-sm font-semibold">Sales summary</h3>
+        <h3 className="mb-2 text-sm font-semibold">{t('Sales summary')}</h3>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-          <Metric label="Total revenue" value={analysis.total.toFixed(2)} tone="dark" />
-          <Metric label="Cash revenue" value={analysis.CASH.toFixed(2)} tone="green" />
-          <Metric label="Bank transfer" value={analysis.BANK_TRANSFER.toFixed(2)} tone="blue" />
-          <Metric label="Transactions" value={String(analysis.count)} />
-          <Metric label="Pairs sold" value={String(productAnalysis.reduce((sum, [, item]) => sum + item.quantity, 0))} />
+          <Metric label={t('Total revenue')} value={analysis.total.toFixed(2)} tone="dark" />
+          <Metric label={t('Cash revenue')} value={analysis.CASH.toFixed(2)} tone="green" />
+          <Metric label={t('Bank transfer')} value={analysis.BANK_TRANSFER.toFixed(2)} tone="blue" />
+          <Metric label={t('Transactions')} value={String(analysis.count)} />
+          <Metric label={t('Pairs sold')} value={String(productAnalysis.reduce((sum, [, item]) => sum + item.quantity, 0))} />
         </div>
       </div>
-      {!!productAnalysis.length && <div className="mb-6 rounded-lg border border-slate-200"><div className="border-b bg-slate-50 p-4"><h3 className="font-semibold">Products sold</h3><p className="mt-1 text-sm text-slate-500">Best-selling shoes for the selected cashier and period.</p></div><div className="overflow-auto"><table className="w-full text-left text-sm"><thead className="text-xs uppercase text-slate-500"><tr className="border-b"><th className="whitespace-nowrap p-3">Product</th><th className="whitespace-nowrap p-3">Pairs sold</th><th className="whitespace-nowrap p-3">Revenue</th></tr></thead><tbody>{productAnalysis.map(([name, item]) => <tr className="border-b last:border-0" key={name}><td className="whitespace-nowrap p-3 font-medium">{name}</td><td className="whitespace-nowrap p-3">{item.quantity}</td><td className="whitespace-nowrap p-3 font-medium">{item.amount.toFixed(2)}</td></tr>)}</tbody></table></div></div>}
-      <div className="rounded-lg border border-slate-200"><div className="border-b bg-slate-50 p-4"><h3 className="font-semibold">Sale details</h3><p className="mt-1 text-sm text-slate-500">Every sale recorded by this cashier.</p></div>{!sales.length ? <p className="p-4 text-sm text-slate-500">No sales found for this selection.</p> : <div className="overflow-auto"><table className="w-full text-left text-sm"><thead className="text-xs uppercase text-slate-500"><tr className="border-b"><th className="whitespace-nowrap p-3">Date</th><th className="whitespace-nowrap p-3">Items</th><th className="whitespace-nowrap p-3">Payment method</th><th className="whitespace-nowrap p-3">Total</th></tr></thead><tbody>{sales.map((sale) => <tr className="border-b last:border-0" key={sale.id}><td className="whitespace-nowrap p-3">{formatSaleDate(sale.created_at)}</td><td className="whitespace-nowrap p-3">{sale.items.map((item) => `${item.name} x${item.quantity}`).join(', ')}</td><td className="whitespace-nowrap p-3"><PaymentBadge method={sale.payment_method} /></td><td className="whitespace-nowrap p-3 font-semibold">{Number(sale.total_amount).toFixed(2)}</td></tr>)}</tbody></table></div>}</div>
+      {!!productAnalysis.length && <div className="mb-6 rounded-lg border border-slate-200"><div className="border-b bg-slate-50 p-4"><h3 className="font-semibold">{t('Products sold')}</h3><p className="mt-1 text-sm text-slate-500">{t('Best-selling shoes for the selected cashier and period.')}</p></div><div className="overflow-auto"><table className="w-full text-left text-sm"><thead className="text-xs uppercase text-slate-500"><tr className="border-b"><th className="whitespace-nowrap p-3">{t('Product')}</th><th className="whitespace-nowrap p-3">{t('Pairs sold')}</th><th className="whitespace-nowrap p-3">{t('Revenue')}</th></tr></thead><tbody>{productAnalysis.map(([name, item]) => <tr className="border-b last:border-0" key={name}><td className="whitespace-nowrap p-3 font-medium">{name}</td><td className="whitespace-nowrap p-3">{item.quantity}</td><td className="whitespace-nowrap p-3 font-medium">{item.amount.toFixed(2)}</td></tr>)}</tbody></table></div></div>}
+      <div className="rounded-lg border border-slate-200"><div className="border-b bg-slate-50 p-4"><h3 className="font-semibold">{t('Sale details')}</h3><p className="mt-1 text-sm text-slate-500">{t('Every sale recorded by this cashier.')}</p></div>{!sales.length ? <p className="p-4 text-sm text-slate-500">{t('No sales found for this selection.')}</p> : <div className="overflow-auto"><table className="w-full text-left text-sm"><thead className="text-xs uppercase text-slate-500"><tr className="border-b"><th className="whitespace-nowrap p-3">{t('Date')}</th><th className="whitespace-nowrap p-3">{t('Items')}</th><th className="whitespace-nowrap p-3">{t('Payment method')}</th><th className="whitespace-nowrap p-3">{t('Total')}</th></tr></thead><tbody>{sales.map((sale) => <tr className="border-b last:border-0" key={sale.id}><td className="whitespace-nowrap p-3">{formatSaleDate(sale.created_at)}</td><td className="whitespace-nowrap p-3">{sale.items.map((item) => `${item.name} x${item.quantity}`).join(', ')}</td><td className="whitespace-nowrap p-3"><PaymentBadge method={sale.payment_method} /></td><td className="whitespace-nowrap p-3 font-semibold">{Number(sale.total_amount).toFixed(2)}</td></tr>)}</tbody></table></div>}</div>
     </Card>
     {showReset && selectedCashier && <div className="fixed inset-0 z-10 flex items-center justify-center bg-slate-900/50 p-4" role="dialog" aria-modal="true" aria-labelledby="edit-account-title">
       <form onSubmit={updateAccount} className="w-full max-w-md space-y-4 rounded-xl bg-white p-6 shadow-xl">
-        <div className="flex items-center justify-between"><div><h2 id="edit-account-title" className="text-lg font-semibold">Edit cashier account</h2><p className="text-sm text-slate-500">{selectedCashier.store_name}</p></div><button type="button" className="text-2xl text-slate-500" aria-label="Close edit account dialog" onClick={() => setShowReset(false)}>×</button></div>
-        <label className="block text-sm font-medium text-slate-700">Full name<input className="mt-1 w-full rounded border p-2 font-normal" required value={accountForm.fullName} onChange={(e) => setAccountForm({ ...accountForm, fullName: e.target.value })} /></label>
-        <label className="block text-sm font-medium text-slate-700">Email<input className="mt-1 w-full rounded border p-2 font-normal" required type="email" value={accountForm.email} onChange={(e) => setAccountForm({ ...accountForm, email: e.target.value })} /></label>
-        <label className="block text-sm font-medium text-slate-700">New password (optional)<input className="mt-1 w-full rounded border p-2 font-normal" minLength="6" type="password" placeholder="Leave blank to keep current password" value={accountForm.password} onChange={(e) => setAccountForm({ ...accountForm, password: e.target.value })} /></label>
-        <div className="flex justify-end gap-2"><button type="button" className="rounded-lg border px-4 py-2 text-sm" onClick={() => setShowReset(false)}>Cancel</button><Button>Save changes</Button></div>
+        <div className="flex items-center justify-between"><div><h2 id="edit-account-title" className="text-lg font-semibold">{t('Edit cashier account')}</h2><p className="text-sm text-slate-500">{selectedCashier.store_name}</p></div><button type="button" className="text-2xl text-slate-500" aria-label="Close edit account dialog" onClick={() => setShowReset(false)}>×</button></div>
+        <label className="block text-sm font-medium text-slate-700">{t('Full name')}<input className="mt-1 w-full rounded border p-2 font-normal" required value={accountForm.fullName} onChange={(e) => setAccountForm({ ...accountForm, fullName: e.target.value })} /></label>
+        <label className="block text-sm font-medium text-slate-700">{t('Email')}<input className="mt-1 w-full rounded border p-2 font-normal" required type="email" value={accountForm.email} onChange={(e) => setAccountForm({ ...accountForm, email: e.target.value })} /></label>
+        <label className="block text-sm font-medium text-slate-700">{t('New password (optional)')}<input className="mt-1 w-full rounded border p-2 font-normal" minLength="6" type="password" placeholder={t('Leave blank to keep current password')} value={accountForm.password} onChange={(e) => setAccountForm({ ...accountForm, password: e.target.value })} /></label>
+        <div className="flex justify-end gap-2"><button type="button" className="rounded-lg border px-4 py-2 text-sm" onClick={() => setShowReset(false)}>{t('Cancel')}</button><Button>{t('Save changes')}</Button></div>
       </form>
     </div>}
     {message && <p className="rounded bg-slate-100 p-3 text-sm">{message}</p>}
@@ -131,8 +133,9 @@ function Metric({ label, value, tone = 'light' }) {
 }
 
 function PaymentBadge({ method }) {
+  const { t } = useLanguage();
   const isCash = method === 'CASH';
-  return <span className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${isCash ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'}`}>{isCash ? 'Cash' : 'Bank transfer'}</span>;
+  return <span className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${isCash ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'}`}>{t(isCash ? 'Cash' : 'Bank transfer')}</span>;
 }
 
 function formatSaleDate(value) {
