@@ -5,12 +5,21 @@ import Card from '../ui/Card';
 
 export default function OwnerDashboard({ alertsOnly = false }) {
   const [data, setData] = useState(null);
+  const [inventory, setInventory] = useState([]);
+  const [stores, setStores] = useState([]);
+  const [inventoryStore, setInventoryStore] = useState('all');
   const [error, setError] = useState('');
   const [amounts, setAmounts] = useState({});
   const [message, setMessage] = useState('');
   const [threshold, setThreshold] = useState(5);
   function loadDashboard() {
-    api.get('/reports/dashboard').then((r) => setData(r.data)).catch((e) => setError(e.response?.data?.error || 'Unable to load dashboard'));
+    Promise.all([api.get('/reports/dashboard'), api.get('/inventory'), api.get('/stores')])
+      .then(([dashboardResponse, inventoryResponse, storesResponse]) => {
+        setData(dashboardResponse.data);
+        setInventory(inventoryResponse.data);
+        setStores(storesResponse.data);
+      })
+      .catch((e) => setError(e.response?.data?.error || 'Unable to load dashboard'));
   }
   useEffect(() => { loadDashboard(); }, []);
   useEffect(() => {
@@ -35,7 +44,7 @@ export default function OwnerDashboard({ alertsOnly = false }) {
     {!alertsOnly && <><div className="grid gap-4 md:grid-cols-3">
       <Card title="Today’s sales"><p className="text-3xl font-bold">{total.toFixed(2)}</p></Card>
       {data.totals.map((row) => <Card key={row.payment_method} title={row.payment_method.replace('_', ' ')}><p className="text-2xl font-bold">{Number(row.total).toFixed(2)}</p></Card>)}
-    </div><Card title="Cashier breakdown"><div className="divide-y">{data.cashiers.map((row) => <div className="flex justify-between py-3" key={row.full_name}><span>{row.full_name} <small className="text-slate-500">({row.store_name})</small></span><strong>{Number(row.total).toFixed(2)} ({row.sale_count} sales)</strong></div>)}</div></Card></>}
+    </div><Card title="Cashier breakdown"><div className="divide-y">{data.cashiers.map((row) => <div className="flex justify-between py-3" key={row.full_name}><span>{row.full_name} <small className="text-slate-500">({row.store_name})</small></span><strong>{Number(row.total).toFixed(2)} ({row.sale_count} sales)</strong></div>)}</div></Card><Card title={<div className="flex flex-wrap items-center justify-between gap-3"><span>Inventory by store</span><label className="flex items-center gap-2 text-sm font-medium text-slate-700">Store<select className="rounded border border-slate-300 bg-white px-2 py-1 font-normal" value={inventoryStore} onChange={(event) => setInventoryStore(event.target.value)}><option value="all">All stores</option>{stores.map((store) => <option key={store.id} value={String(store.id)}>{store.name}</option>)}</select></label></div>}><div className="grid gap-4 md:grid-cols-3">{groupInventory(inventory, stores, inventoryStore).map(([storeName, items]) => <div className="rounded-lg border border-slate-200" key={storeName}><h3 className="border-b bg-slate-50 p-3 font-semibold">{storeName}</h3>{items.length ? <div className="divide-y">{items.map((item) => <div className="flex justify-between gap-3 p-3 text-sm" key={`${item.product_id}-${item.store_id}`}><span className="whitespace-nowrap">{item.name} <span className="text-slate-500">({item.size}, {item.color})</span></span><strong className="whitespace-nowrap">{item.quantity} pairs</strong></div>)}</div> : <p className="p-3 text-sm text-slate-500">No inventory</p>}</div>)}</div></Card></>}
     {alertsOnly && <Card title="General alert setting"><form className="flex items-end gap-3" onSubmit={saveThreshold}><label className="text-sm font-medium text-slate-700">Alert when stock is below<input className="mt-1 block w-28 rounded border p-2" required min="0" type="number" value={threshold} onChange={(event) => setThreshold(event.target.value)} /></label><span className="pb-2 text-sm text-slate-500">pairs in any store</span><button className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white" type="submit">Save</button></form></Card>}
     <Card title={`Low stock alerts (${data.alerts.length})`}>
       {data.alerts.length ? <div className="space-y-3">{data.alerts.map((row) => {
@@ -65,4 +74,14 @@ export default function OwnerDashboard({ alertsOnly = false }) {
       {message && <p className="mt-3 text-sm text-slate-700">{message}</p>}
     </Card>
   </div>;
+}
+
+function groupInventory(rows, stores, selectedStore) {
+  const visibleStores = selectedStore === 'all' ? stores : stores.filter((store) => String(store.id) === selectedStore);
+  const groups = new Map(visibleStores.map((store) => [store.name, []]));
+  rows.filter((row) => selectedStore === 'all' || String(row.store_id) === selectedStore).forEach((row) => {
+    if (!groups.has(row.store_name)) groups.set(row.store_name, []);
+    groups.get(row.store_name).push(row);
+  });
+  return Array.from(groups.entries()).sort(([first], [second]) => first.localeCompare(second));
 }
