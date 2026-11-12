@@ -3,19 +3,66 @@ import { useEffect, useState } from 'react';
 import api from '../../lib/api';
 import Card from '../ui/Card';
 
-export default function OwnerDashboard() {
+export default function OwnerDashboard({ alertsOnly = false }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
-  useEffect(() => { api.get('/reports/dashboard').then((r) => setData(r.data)).catch((e) => setError(e.response?.data?.error || 'Unable to load dashboard')); }, []);
+  const [amounts, setAmounts] = useState({});
+  const [message, setMessage] = useState('');
+  const [threshold, setThreshold] = useState(5);
+  function loadDashboard() {
+    api.get('/reports/dashboard').then((r) => setData(r.data)).catch((e) => setError(e.response?.data?.error || 'Unable to load dashboard'));
+  }
+  useEffect(() => { loadDashboard(); }, []);
+  useEffect(() => {
+    if (alertsOnly) api.get('/stores').then(({ data: stores }) => {
+      if (stores.length) setThreshold(stores[0].low_stock_threshold);
+    }).catch(() => setMessage('Unable to load alert settings'));
+  }, [alertsOnly]);
+  async function saveThreshold(event) {
+    event.preventDefault();
+    try {
+      await api.patch('/stores/threshold', { threshold: Number(threshold) });
+      setMessage('Alert threshold updated for all stores.');
+      loadDashboard();
+    } catch (requestError) {
+      setMessage(requestError.response?.data?.error || 'Unable to update alert threshold');
+    }
+  }
   if (error) return <p className="text-red-600">{error}</p>;
   if (!data) return <p>Loading dashboard...</p>;
   const total = data.totals.reduce((sum, row) => sum + Number(row.total), 0);
   return <div className="space-y-6">
-    <div className="grid gap-4 md:grid-cols-3">
+    {!alertsOnly && <><div className="grid gap-4 md:grid-cols-3">
       <Card title="Today’s sales"><p className="text-3xl font-bold">{total.toFixed(2)}</p></Card>
       {data.totals.map((row) => <Card key={row.payment_method} title={row.payment_method.replace('_', ' ')}><p className="text-2xl font-bold">{Number(row.total).toFixed(2)}</p></Card>)}
-    </div>
-    <Card title="Cashier breakdown"><div className="divide-y">{data.cashiers.map((row) => <div className="flex justify-between py-3" key={row.full_name}><span>{row.full_name} <small className="text-slate-500">({row.store_name})</small></span><strong>{Number(row.total).toFixed(2)} ({row.sale_count} sales)</strong></div>)}</div></Card>
-    <Card title={`Low stock alerts (${data.alerts.length})`}>{data.alerts.length ? <div className="space-y-2">{data.alerts.map((row) => <div className="rounded bg-amber-50 p-3 text-amber-900" key={`${row.store_id}-${row.product_id}`}>{row.name} / {row.size} / {row.color}: {row.quantity} pairs at {row.store_name}</div>)}</div> : <p className="text-emerald-700">All stores are above their thresholds.</p>}</Card>
+    </div><Card title="Cashier breakdown"><div className="divide-y">{data.cashiers.map((row) => <div className="flex justify-between py-3" key={row.full_name}><span>{row.full_name} <small className="text-slate-500">({row.store_name})</small></span><strong>{Number(row.total).toFixed(2)} ({row.sale_count} sales)</strong></div>)}</div></Card></>}
+    {alertsOnly && <Card title="General alert setting"><form className="flex items-end gap-3" onSubmit={saveThreshold}><label className="text-sm font-medium text-slate-700">Alert when stock is below<input className="mt-1 block w-28 rounded border p-2" required min="0" type="number" value={threshold} onChange={(event) => setThreshold(event.target.value)} /></label><span className="pb-2 text-sm text-slate-500">pairs in any store</span><button className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white" type="submit">Save</button></form></Card>}
+    <Card title={`Low stock alerts (${data.alerts.length})`}>
+      {data.alerts.length ? <div className="space-y-3">{data.alerts.map((row) => {
+        const key = `${row.store_id}-${row.product_id}`;
+        async function addPairs() {
+          const quantity = Number(amounts[key]);
+          if (!Number.isInteger(quantity) || quantity <= 0) {
+            setMessage('Enter a positive whole number of pairs.');
+            return;
+          }
+          try {
+            await api.post('/inventory', { productId: row.product_id, storeId: row.store_id, quantity, notes: 'Stock added from low-stock alert' });
+            setAmounts({ ...amounts, [key]: '' });
+            setMessage('Stock added and alerts refreshed.');
+            loadDashboard();
+          } catch (requestError) {
+            setMessage(requestError.response?.data?.error || 'Unable to add stock');
+          }
+        }
+        return <div className="rounded-lg border border-amber-200 bg-amber-50 p-3" key={key}>
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="text-amber-950"><p className="font-semibold">{row.name} - size {row.size} - {row.color}</p><p className="text-sm">{row.store_name}: <strong>{row.quantity} pairs</strong> remaining, alert threshold {row.low_stock_threshold}</p></div>
+            <div className="flex items-end gap-2"><label className="whitespace-nowrap text-xs font-medium text-amber-900">Add pairs<input aria-label={`Add pairs for ${row.name} at ${row.store_name}`} className="mt-1 block w-24 rounded border border-amber-300 bg-white p-2 text-sm text-slate-900" min="1" type="number" placeholder="0" value={amounts[key] || ''} onChange={(event) => setAmounts({ ...amounts, [key]: event.target.value })} /></label><button className="rounded-lg bg-amber-700 px-3 py-2 text-sm font-medium text-white hover:bg-amber-800" type="button" onClick={addPairs}>Add</button></div>
+          </div>
+        </div>;
+      })}</div> : <p className="text-emerald-700">All stores are above their thresholds.</p>}
+      {message && <p className="mt-3 text-sm text-slate-700">{message}</p>}
+    </Card>
   </div>;
 }
