@@ -77,7 +77,7 @@ export default function CashierInventoryPage() {
         <Field label="Selling price"><input className="rounded border p-2" required min="0" step="0.01" type="number" placeholder="0.00" value={form.sellingPrice} onChange={(event) => setForm({ ...form, sellingPrice: event.target.value })} /></Field>
         <Field label="Cost price (optional)"><input className="rounded border p-2" min="0" step="0.01" type="number" placeholder="0.00" value={form.costPrice} onChange={(event) => setForm({ ...form, costPrice: event.target.value })} /></Field>
         <Field label="Initial stock (pairs)"><input className="rounded border p-2" required min="1" type="number" placeholder="e.g. 10" value={form.stock} onChange={(event) => setForm({ ...form, stock: event.target.value })} /></Field>
-        <Button>Add shoe to my inventory</Button>
+        <Button>Add shoe to my store</Button>
       </form>
     </Card>
     <Card title="Shoes in my store" className="mt-6">
