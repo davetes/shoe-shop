@@ -5,8 +5,12 @@ async function create(req, res) {
   if (req.user.role !== 'CASHIER') throw httpError('Only cashiers can register sales', 403);
   const { paymentMethod, items } = req.body;
   if (!['CASH', 'BANK_TRANSFER'].includes(paymentMethod) || !Array.isArray(items) || !items.length) throw httpError('Valid paymentMethod and items are required');
-  const normalized = items.map((item) => ({ productId: Number(item.productId), quantity: Number(item.quantity) }));
-  if (normalized.some((item) => !Number.isInteger(item.productId) || !Number.isInteger(item.quantity) || item.quantity <= 0)) throw httpError('Each item needs a productId and positive integer quantity');
+  const normalized = items.map((item) => ({
+    productId: Number(item.productId),
+    quantity: Number(item.quantity),
+    unitPrice: item.unitPrice === undefined || item.unitPrice === '' ? undefined : Number(item.unitPrice)
+  }));
+  if (normalized.some((item) => !Number.isInteger(item.productId) || !Number.isInteger(item.quantity) || item.quantity <= 0 || (item.unitPrice !== undefined && (!Number.isFinite(item.unitPrice) || item.unitPrice <= 0)))) throw httpError('Each item needs a productId, positive integer quantity, and positive sale price');
   res.status(201).json(await createSale({ storeId: req.user.storeId, cashierId: req.user.id, paymentMethod, items: normalized }));
 }
 

@@ -20,6 +20,11 @@ export default function SalesHistory() {
 
   useEffect(() => { loadSales(); }, [fromDate, toDate]);
 
+  const totalAmount = sales.reduce((sum, sale) => sum + Number(sale.total_amount), 0);
+  const pairsSold = sales.reduce((sum, sale) => sum + sale.items.reduce((itemSum, item) => itemSum + Number(item.quantity), 0), 0);
+  const cashAmount = sales.filter((sale) => sale.payment_method === 'CASH').reduce((sum, sale) => sum + Number(sale.total_amount), 0);
+  const bankAmount = sales.filter((sale) => sale.payment_method === 'BANK_TRANSFER').reduce((sum, sale) => sum + Number(sale.total_amount), 0);
+
   return <Card title="My sales">
     <form className="mb-4 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-end gap-2 rounded-lg bg-slate-50 p-3" onSubmit={(event) => { event.preventDefault(); loadSales(); }}>
       <label className="min-w-0 whitespace-nowrap text-sm">From<input className="mt-1 block min-w-0 w-full rounded border p-2 text-xs" type="date" value={fromDate} onChange={(event) => { setFromDate(event.target.value); setPage(1); }} /></label>
@@ -27,7 +32,7 @@ export default function SalesHistory() {
     </form>
     {error && <p className="text-sm text-red-600">{error}</p>}
     {!error && !sales.length && <p className="text-sm text-slate-500">You have not recorded any sales yet.</p>}
-    {!!sales.length && <><div className="overflow-auto"><table className="w-full text-left text-sm">
+    {!!sales.length && <><div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4"><SummaryCard label="Total amount" value={totalAmount.toFixed(2)} /><SummaryCard label="Sales" value={sales.length} /><SummaryCard label="Pairs sold" value={pairsSold} /><SummaryCard label="Cash / Bank" value={`${cashAmount.toFixed(2)} / ${bankAmount.toFixed(2)}`} /></div><div className="overflow-auto"><table className="w-full text-left text-sm">
       <thead><tr className="border-b"><th className="whitespace-nowrap p-2">Date</th><th className="whitespace-nowrap p-2">Items</th><th className="whitespace-nowrap p-2">Payment</th><th className="whitespace-nowrap p-2">Total</th></tr></thead>
       <tbody>{sales.slice((page - 1) * pageSize, page * pageSize).map((sale) => <tr className="border-b" key={sale.id}>
         <td className="whitespace-nowrap p-2">{formatSaleDate(sale.created_at)}</td>
@@ -37,6 +42,10 @@ export default function SalesHistory() {
       </tr>)}</tbody>
     </table></div><Pagination page={page} pageSize={pageSize} total={sales.length} onChange={setPage} /></>}
   </Card>;
+}
+
+function SummaryCard({ label, value }) {
+  return <div className="rounded-lg border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-medium text-slate-500">{label}</p><p className="mt-1 text-lg font-bold text-slate-900">{value}</p></div>;
 }
 
 function Pagination({ page, pageSize, total, onChange }) {

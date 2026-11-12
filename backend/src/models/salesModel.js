@@ -16,8 +16,9 @@ async function createSale({ storeId, cashierId, paymentMethod, items }) {
       const row = result.rows[0];
       if (!row) throw httpError(`Product ${item.productId} is not stocked at this store`);
       if (row.quantity < item.quantity) throw httpError(`Insufficient stock for product ${item.productId}`);
-      total += Number(row.selling_price) * item.quantity;
-      lockedItems.push({ ...item, unitPrice: row.selling_price });
+      const unitPrice = item.unitPrice ?? Number(row.selling_price);
+      total += unitPrice * item.quantity;
+      lockedItems.push({ ...item, unitPrice });
     }
 
     const sale = await client.query(
