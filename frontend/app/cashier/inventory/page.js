@@ -1,54 +1,51 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import api from '../../../lib/api';
 import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
 
+const emptyForm = { name: '', size: '', color: '', costPrice: '', sellingPrice: '', stock: '' };
+
 export default function CashierInventoryPage() {
-  const [products, setProducts] = useState([]);
-  const [productId, setProductId] = useState('');
-  const [quantity, setQuantity] = useState(1);
-  const [notes, setNotes] = useState('');
+  const [form, setForm] = useState(emptyForm);
   const [message, setMessage] = useState('');
-
-  function loadProducts() {
-    api.get('/inventory')
-      .then(({ data }) => {
-        setProducts(data);
-        if (data.length && !productId) setProductId(String(data[0].product_id));
-      })
-      .catch((error) => setMessage(error.response?.data?.error || 'Unable to load inventory'));
-  }
-
-  useEffect(() => { loadProducts(); }, []);
 
   async function submit(event) {
     event.preventDefault();
+    setMessage('');
     try {
-      await api.post('/inventory', {
-        productId: Number(productId),
-        quantity: Number(quantity),
-        notes: notes || undefined
+      const { data: product } = await api.post('/products', {
+        name: form.name,
+        size: form.size,
+        color: form.color,
+        costPrice: Number(form.costPrice || 0),
+        sellingPrice: Number(form.sellingPrice)
       });
-      setQuantity(1);
-      setNotes('');
-      setMessage('Inventory added to your assigned store.');
-      loadProducts();
+      if (Number(form.stock) > 0) {
+        await api.post('/inventory', {
+          productId: product.id,
+          quantity: Number(form.stock),
+          notes: 'Initial stock added by cashier'
+        });
+      }
+      setForm(emptyForm);
+      setMessage('New shoe added to your store inventory.');
     } catch (error) {
-      setMessage(error.response?.data?.error || 'Unable to add inventory');
+      setMessage(error.response?.data?.error || 'Unable to add shoe');
     }
   }
 
   return <main className="mx-auto max-w-xl">
-    <Card title="Add inventory">
-      <p className="mb-4 text-sm text-slate-600">Add arriving stock to your assigned store.</p>
+    <Card title="Add a new shoe">
+      <p className="mb-4 text-sm text-slate-600">Create a shoe and add its initial quantity to your assigned store.</p>
       <form onSubmit={submit} className="space-y-4">
-        <select className="w-full rounded border p-2" required value={productId} onChange={(event) => setProductId(event.target.value)}>
-          {products.map((product) => <option key={product.product_id} value={product.product_id}>{product.name} - size {product.size} - {product.color} ({product.quantity} pairs)</option>)}
-        </select>
-        <input className="w-full rounded border p-2" required min="1" type="number" value={quantity} onChange={(event) => setQuantity(event.target.value)} />
-        <textarea className="w-full rounded border p-2" placeholder="Notes (optional)" value={notes} onChange={(event) => setNotes(event.target.value)} />
-        <Button disabled={!products.length}>Add inventory</Button>
+        <input className="w-full rounded border p-2" required placeholder="Name" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
+        <input className="w-full rounded border p-2" required placeholder="Size" value={form.size} onChange={(event) => setForm({ ...form, size: event.target.value })} />
+        <input className="w-full rounded border p-2" required placeholder="Color" value={form.color} onChange={(event) => setForm({ ...form, color: event.target.value })} />
+        <input className="w-full rounded border p-2" required min="0" step="0.01" type="number" placeholder="Selling price" value={form.sellingPrice} onChange={(event) => setForm({ ...form, sellingPrice: event.target.value })} />
+        <input className="w-full rounded border p-2" min="0" step="0.01" type="number" placeholder="Cost price (optional)" value={form.costPrice} onChange={(event) => setForm({ ...form, costPrice: event.target.value })} />
+        <input className="w-full rounded border p-2" required min="1" type="number" placeholder="Initial stock" value={form.stock} onChange={(event) => setForm({ ...form, stock: event.target.value })} />
+        <Button>Add shoe to my inventory</Button>
         {message && <p className="text-sm">{message}</p>}
       </form>
     </Card>

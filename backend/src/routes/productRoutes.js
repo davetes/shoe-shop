@@ -7,5 +7,5 @@ const { asyncHandler } = require('../utils/errorHandler');
 const router = express.Router();
 router.use(authenticate);
 router.get('/', asyncHandler(controller.list));
-router.post('/', requireRole('OWNER'), asyncHandler(controller.create));
+router.post('/', requireRole('OWNER', 'CASHIER'), asyncHandler(controller.create));
 module.exports = router;

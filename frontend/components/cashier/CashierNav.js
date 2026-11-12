@@ -6,7 +6,7 @@ import { clearSession, getUser } from '../../lib/auth';
 const links = [
   { href: '/cashier/sales', label: 'Register sale' },
   { href: '/cashier/history', label: 'My sales' },
-  { href: '/cashier/inventory', label: 'Add inventory' }
+  { href: '/cashier/inventory', label: 'Add new shoe' }
 ];
 
 export default function CashierNav() {
