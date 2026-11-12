@@ -8,4 +8,5 @@ const router = express.Router();
 router.use(authenticate);
 router.get('/', asyncHandler(controller.list));
 router.post('/', requireRole('OWNER', 'CASHIER'), asyncHandler(controller.create));
+router.patch('/:id', requireRole('OWNER', 'CASHIER'), asyncHandler(controller.update));
 module.exports = router;

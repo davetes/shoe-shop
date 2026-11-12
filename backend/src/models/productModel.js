@@ -18,4 +18,16 @@ async function createProduct({ name, size, color, costPrice, sellingPrice }) {
   return result.rows[0];
 }
 
-module.exports = { listProducts, createProduct };
+async function updateProduct({ id, name, size, color, costPrice, sellingPrice, storeId }) {
+  const result = await db.query(
+    `UPDATE products SET name = $1, size = $2, color = $3, cost_price = $4, selling_price = $5
+     WHERE id = $6 AND ($7::int IS NULL OR EXISTS (
+       SELECT 1 FROM inventory WHERE inventory.product_id = products.id AND inventory.store_id = $7
+     ))
+     RETURNING id, name, size, color, cost_price, selling_price`,
+    [name, size, color, costPrice, sellingPrice, id, storeId || null]
+  );
+  return result.rows[0];
+}
+
+module.exports = { listProducts, createProduct, updateProduct };

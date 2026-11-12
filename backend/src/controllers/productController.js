@@ -1,4 +1,4 @@
-const { listProducts, createProduct } = require('../models/productModel');
+const { listProducts, createProduct, updateProduct } = require('../models/productModel');
 const { httpError } = require('../utils/errorHandler');
 
 async function list(req, res) {
@@ -23,4 +23,26 @@ async function create(req, res) {
   }));
 }
 
-module.exports = { list, create };
+async function update(req, res) {
+  const { name, size, color, costPrice = 0, sellingPrice, price } = req.body;
+  const resolvedSellingPrice = sellingPrice ?? price;
+  if (!name || !size || !color || resolvedSellingPrice === undefined) {
+    throw httpError('name, size, color, and selling price are required');
+  }
+  if (Number(costPrice) < 0 || Number(resolvedSellingPrice) < 0) {
+    throw httpError('Prices cannot be negative');
+  }
+  const product = await updateProduct({
+    id: Number(req.params.id),
+    name: String(name).trim(),
+    size: String(size).trim(),
+    color: String(color).trim(),
+    costPrice: Number(costPrice),
+    sellingPrice: Number(resolvedSellingPrice),
+    storeId: req.user.role === 'CASHIER' ? req.user.storeId : null
+  });
+  if (!product) throw httpError('Shoe not found in your store', 404);
+  res.json(product);
+}
+
+module.exports = { list, create, update };
