@@ -8,6 +8,4 @@ router.use(authenticate);
 router.get('/', asyncHandler(controller.inventory));
 router.get('/transactions', asyncHandler(controller.transactions));
 router.post('/', requireRole('OWNER', 'CASHIER'), asyncHandler(controller.importStock));
-router.post('/import', requireRole('CASHIER'), asyncHandler(controller.importStock));
-router.post('/export', requireRole('CASHIER'), asyncHandler(controller.exportStock));
 module.exports = router;
