@@ -29,4 +29,14 @@ async function updateCashierPassword(id, passwordHash) {
   return result.rows[0];
 }
 
-module.exports = { listCashiers, createCashier, updateCashierPassword };
+async function updateCashier({ id, fullName, email, passwordHash }) {
+  const result = await db.query(
+    `UPDATE users SET full_name = $1, email = $2, password_hash = COALESCE($3, password_hash)
+     WHERE id = $4 AND role = 'CASHIER'
+     RETURNING id, full_name, email, store_id`,
+    [fullName, email, passwordHash, id]
+  );
+  return result.rows[0];
+}
+
+module.exports = { listCashiers, createCashier, updateCashierPassword, updateCashier };

@@ -68,7 +68,7 @@ export default function InventoryPage() {
       {message && <p className="mt-3 text-sm">{message}</p>}
     </Card>
     <Card title="Inventory across stores">
-      <div className="overflow-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b"><th className="p-2">Store</th><th className="p-2">Product</th><th className="p-2">Size</th><th className="p-2">Color</th><th className="p-2">Pairs</th></tr></thead><tbody>{rows.map((row) => <tr className="border-b" key={`${row.store_id}-${row.product_id}`}><td className="p-2">{row.store_name}</td><td className="p-2">{row.name}</td><td className="p-2">{row.size}</td><td className="p-2">{row.color}</td><td className="p-2">{row.quantity}</td></tr>)}</tbody></table></div>
+      <div className="overflow-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b"><th className="whitespace-nowrap p-2">Store</th><th className="whitespace-nowrap p-2">Product</th><th className="whitespace-nowrap p-2">Size</th><th className="whitespace-nowrap p-2">Color</th><th className="whitespace-nowrap p-2">Pairs</th></tr></thead><tbody>{rows.map((row) => <tr className="border-b" key={`${row.store_id}-${row.product_id}`}><td className="whitespace-nowrap p-2">{row.store_name}</td><td className="whitespace-nowrap p-2">{row.name}</td><td className="whitespace-nowrap p-2">{row.size}</td><td className="whitespace-nowrap p-2">{row.color}</td><td className="whitespace-nowrap p-2">{row.quantity}</td></tr>)}</tbody></table></div>
     </Card>
   </main>;
 }

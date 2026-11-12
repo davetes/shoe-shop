@@ -82,8 +82,8 @@ export default function CashierInventoryPage() {
     </Card>
     <Card title="Shoes in my store" className="mt-6">
       {!inventory.length ? <p className="text-sm text-slate-500">No shoes are currently recorded in your store.</p> : <div className="overflow-auto"><table className="w-full text-left text-sm">
-        <thead><tr className="border-b"><th className="p-2">Shoe</th><th className="p-2">Size</th><th className="p-2">Color</th><th className="p-2">Stock</th><th className="p-2">Action</th></tr></thead>
-        <tbody>{inventory.map((row) => <tr className="border-b" key={row.product_id}><td className="p-2">{row.name}</td><td className="p-2">{row.size}</td><td className="p-2">{row.color}</td><td className="p-2">{row.quantity}</td><td className="p-2"><button className="text-blue-700 underline" type="button" onClick={() => beginEdit({ ...row })}>Edit</button></td></tr>)}</tbody>
+        <thead><tr className="border-b"><th className="whitespace-nowrap p-2">Shoe</th><th className="whitespace-nowrap p-2">Size</th><th className="whitespace-nowrap p-2">Color</th><th className="whitespace-nowrap p-2">Stock</th><th className="whitespace-nowrap p-2">Action</th></tr></thead>
+        <tbody>{inventory.map((row) => <tr className="border-b" key={row.product_id}><td className="whitespace-nowrap p-2">{row.name}</td><td className="whitespace-nowrap p-2">{row.size}</td><td className="whitespace-nowrap p-2">{row.color}</td><td className="whitespace-nowrap p-2">{row.quantity}</td><td className="whitespace-nowrap p-2"><button className="text-blue-700 underline" type="button" onClick={() => beginEdit({ ...row })}>Edit</button></td></tr>)}</tbody>
       </table></div>}
     </Card>
     {editing && <div className="fixed inset-0 z-10 flex items-center justify-center bg-slate-900/50 p-4" role="dialog" aria-modal="true" aria-labelledby="edit-shoe-title">

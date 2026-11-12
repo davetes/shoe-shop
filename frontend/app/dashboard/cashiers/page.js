@@ -14,9 +14,10 @@ export default function CashiersPage() {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [form, setForm] = useState(emptyForm);
-  const [newPassword, setNewPassword] = useState('');
   const [message, setMessage] = useState('');
   const [showCreate, setShowCreate] = useState(false);
+  const [showReset, setShowReset] = useState(false);
+  const [accountForm, setAccountForm] = useState({ fullName: '', email: '', password: '' });
 
   function loadCashiers() {
     api.get('/users/cashiers').then(({ data }) => {
@@ -53,14 +54,16 @@ export default function CashiersPage() {
     } catch (error) { setMessage(error.response?.data?.error || 'Unable to create cashier'); }
   }
 
-  async function resetPassword(event) {
+  async function updateAccount(event) {
     event.preventDefault();
     if (!selectedCashierId) return;
     try {
-      await api.patch(`/users/cashiers/${selectedCashierId}/password`, { password: newPassword });
-      setNewPassword('');
-      setMessage('Cashier password updated.');
-    } catch (error) { setMessage(error.response?.data?.error || 'Unable to update password'); }
+      await api.patch(`/users/cashiers/${selectedCashierId}`, accountForm);
+      setAccountForm({ fullName: '', email: '', password: '' });
+      setShowReset(false);
+      setMessage('Cashier account updated.');
+      loadCashiers();
+    } catch (error) { setMessage(error.response?.data?.error || 'Unable to update cashier account'); }
   }
 
   const selectedCashier = cashiers.find((cashier) => cashier.id === selectedCashierId);
@@ -89,19 +92,13 @@ export default function CashiersPage() {
         <label className="text-sm font-medium text-slate-700">Store<select className="mt-1 w-full rounded border p-2 font-normal" value={form.storeId} onChange={(e) => setForm({ ...form, storeId: e.target.value })}>{stores.map((store) => <option key={store.id} value={store.id}>{store.name}</option>)}</select></label>
         <div className="flex items-end"><Button>Create account</Button></div>
       </form>}
-      {!cashiers.length ? <p className="text-sm text-slate-500">No cashiers found.</p> : <div className="overflow-auto"><table className="w-full text-left text-sm"><thead className="text-xs uppercase text-slate-500"><tr className="border-b"><th className="p-3">Name</th><th className="p-3">Email</th><th className="p-3">Store</th><th className="p-3">Action</th></tr></thead><tbody>{cashiers.map((cashier) => <tr className={`cursor-pointer border-b last:border-0 hover:bg-slate-50 ${cashier.id === selectedCashierId ? 'bg-blue-50' : ''}`} key={cashier.id} onClick={() => setSelectedCashierId(cashier.id)}><td className="p-3 font-medium">{cashier.full_name}</td><td className="p-3">{cashier.email}</td><td className="p-3">{cashier.store_name}</td><td className="p-3"><button className="font-medium text-blue-700 underline" type="button" onClick={(event) => { event.stopPropagation(); setSelectedCashierId(cashier.id); }}>View details</button></td></tr>)}</tbody></table></div>}
+      {!cashiers.length ? <p className="text-sm text-slate-500">No cashiers found.</p> : <div className="overflow-auto"><table className="w-full text-left text-sm"><thead className="text-xs uppercase text-slate-500"><tr className="border-b"><th className="whitespace-nowrap p-3">Name</th><th className="whitespace-nowrap p-3">Email</th><th className="whitespace-nowrap p-3">Store</th><th className="whitespace-nowrap p-3">Action</th></tr></thead><tbody>{cashiers.map((cashier) => <tr className={`cursor-pointer border-b last:border-0 hover:bg-slate-50 ${cashier.id === selectedCashierId ? 'bg-blue-50' : ''}`} key={cashier.id} onClick={() => setSelectedCashierId(cashier.id)}><td className="whitespace-nowrap p-3 font-medium">{cashier.full_name}</td><td className="whitespace-nowrap p-3">{cashier.email}</td><td className="whitespace-nowrap p-3">{cashier.store_name}</td><td className="whitespace-nowrap p-3"><div className="flex gap-3 whitespace-nowrap"><button className="font-medium text-blue-700 underline" type="button" onClick={(event) => { event.stopPropagation(); setSelectedCashierId(cashier.id); }}>View details</button><button className="font-medium text-amber-700 underline" type="button" onClick={(event) => { event.stopPropagation(); setSelectedCashierId(cashier.id); setAccountForm({ fullName: cashier.full_name, email: cashier.email, password: '' }); setShowReset(true); }}>Edit account</button></div></td></tr>)}</tbody></table></div>}
     </Card>
-    <div className="grid gap-6 lg:grid-cols-2">
-      <Card title="Cashier details and password">
-        {selectedCashier && <div className="mb-4 rounded bg-slate-50 p-3 text-sm"><p><strong>Name:</strong> {selectedCashier.full_name}</p><p><strong>Email:</strong> {selectedCashier.email}</p><p><strong>Store:</strong> {selectedCashier.store_name}</p></div>}
-        <form onSubmit={resetPassword} className="flex gap-2"><input className="min-w-0 flex-1 rounded border p-2" required minLength="6" type="password" placeholder="New password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} /><Button>Reset password</Button></form>
-      </Card>
-    </div>
     <Card title={`${selectedCashier?.full_name || 'Cashier'} sales`}>
-      <form className="mb-4 grid gap-3 rounded-lg bg-slate-50 p-3 md:grid-cols-[1fr_1fr_auto]" onSubmit={(event) => { event.preventDefault(); loadSales(); }}>
-        <label className="text-sm">From<input className="mt-1 block w-full rounded border p-2" type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} /></label>
-        <label className="text-sm">To<input className="mt-1 block w-full rounded border p-2" type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} /></label>
-        <button className="self-end rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white" type="submit">Filter</button>
+      <form className="mb-4 flex items-end gap-3 overflow-x-auto rounded-lg bg-slate-50 p-3" onSubmit={(event) => { event.preventDefault(); loadSales(); }}>
+        <label className="min-w-[145px] whitespace-nowrap text-sm">From<input className="mt-1 block w-full rounded border p-2" type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} /></label>
+        <label className="min-w-[145px] whitespace-nowrap text-sm">To<input className="mt-1 block w-full rounded border p-2" type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} /></label>
+        <button className="shrink-0 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white" type="submit">Filter</button>
       </form>
       <div className="mb-6">
         <h3 className="mb-3 text-base font-semibold">Sales summary</h3>
@@ -113,9 +110,18 @@ export default function CashiersPage() {
           <Metric label="Pairs sold" value={String(productAnalysis.reduce((sum, [, item]) => sum + item.quantity, 0))} />
         </div>
       </div>
-      {!!productAnalysis.length && <div className="mb-6 rounded-lg border border-slate-200"><div className="border-b bg-slate-50 p-4"><h3 className="font-semibold">Products sold</h3><p className="mt-1 text-sm text-slate-500">Best-selling shoes for the selected cashier and period.</p></div><div className="overflow-auto"><table className="w-full text-left text-sm"><thead className="text-xs uppercase text-slate-500"><tr className="border-b"><th className="p-3">Product</th><th className="p-3">Pairs sold</th><th className="p-3">Revenue</th></tr></thead><tbody>{productAnalysis.map(([name, item]) => <tr className="border-b last:border-0" key={name}><td className="p-3 font-medium">{name}</td><td className="p-3">{item.quantity}</td><td className="p-3 font-medium">{item.amount.toFixed(2)}</td></tr>)}</tbody></table></div></div>}
-      <div className="rounded-lg border border-slate-200"><div className="border-b bg-slate-50 p-4"><h3 className="font-semibold">Sale details</h3><p className="mt-1 text-sm text-slate-500">Every sale recorded by this cashier.</p></div>{!sales.length ? <p className="p-4 text-sm text-slate-500">No sales found for this selection.</p> : <div className="overflow-auto"><table className="w-full text-left text-sm"><thead className="text-xs uppercase text-slate-500"><tr className="border-b"><th className="p-3">Date</th><th className="p-3">Items</th><th className="p-3">Payment method</th><th className="p-3">Total</th></tr></thead><tbody>{sales.map((sale) => <tr className="border-b last:border-0" key={sale.id}><td className="whitespace-nowrap p-3">{new Date(sale.created_at).toLocaleString()}</td><td className="p-3">{sale.items.map((item) => `${item.name} x${item.quantity}`).join(', ')}</td><td className="p-3"><PaymentBadge method={sale.payment_method} /></td><td className="p-3 font-semibold">{Number(sale.total_amount).toFixed(2)}</td></tr>)}</tbody></table></div>}</div>
+      {!!productAnalysis.length && <div className="mb-6 rounded-lg border border-slate-200"><div className="border-b bg-slate-50 p-4"><h3 className="font-semibold">Products sold</h3><p className="mt-1 text-sm text-slate-500">Best-selling shoes for the selected cashier and period.</p></div><div className="overflow-auto"><table className="w-full text-left text-sm"><thead className="text-xs uppercase text-slate-500"><tr className="border-b"><th className="whitespace-nowrap p-3">Product</th><th className="whitespace-nowrap p-3">Pairs sold</th><th className="whitespace-nowrap p-3">Revenue</th></tr></thead><tbody>{productAnalysis.map(([name, item]) => <tr className="border-b last:border-0" key={name}><td className="whitespace-nowrap p-3 font-medium">{name}</td><td className="whitespace-nowrap p-3">{item.quantity}</td><td className="whitespace-nowrap p-3 font-medium">{item.amount.toFixed(2)}</td></tr>)}</tbody></table></div></div>}
+      <div className="rounded-lg border border-slate-200"><div className="border-b bg-slate-50 p-4"><h3 className="font-semibold">Sale details</h3><p className="mt-1 text-sm text-slate-500">Every sale recorded by this cashier.</p></div>{!sales.length ? <p className="p-4 text-sm text-slate-500">No sales found for this selection.</p> : <div className="overflow-auto"><table className="w-full text-left text-sm"><thead className="text-xs uppercase text-slate-500"><tr className="border-b"><th className="whitespace-nowrap p-3">Date</th><th className="whitespace-nowrap p-3">Items</th><th className="whitespace-nowrap p-3">Payment method</th><th className="whitespace-nowrap p-3">Total</th></tr></thead><tbody>{sales.map((sale) => <tr className="border-b last:border-0" key={sale.id}><td className="whitespace-nowrap p-3">{new Date(sale.created_at).toLocaleString()}</td><td className="whitespace-nowrap p-3">{sale.items.map((item) => `${item.name} x${item.quantity}`).join(', ')}</td><td className="whitespace-nowrap p-3"><PaymentBadge method={sale.payment_method} /></td><td className="whitespace-nowrap p-3 font-semibold">{Number(sale.total_amount).toFixed(2)}</td></tr>)}</tbody></table></div>}</div>
     </Card>
+    {showReset && selectedCashier && <div className="fixed inset-0 z-10 flex items-center justify-center bg-slate-900/50 p-4" role="dialog" aria-modal="true" aria-labelledby="edit-account-title">
+      <form onSubmit={updateAccount} className="w-full max-w-md space-y-4 rounded-xl bg-white p-6 shadow-xl">
+        <div className="flex items-center justify-between"><div><h2 id="edit-account-title" className="text-lg font-semibold">Edit cashier account</h2><p className="text-sm text-slate-500">{selectedCashier.store_name}</p></div><button type="button" className="text-2xl text-slate-500" aria-label="Close edit account dialog" onClick={() => setShowReset(false)}>×</button></div>
+        <label className="block text-sm font-medium text-slate-700">Full name<input className="mt-1 w-full rounded border p-2 font-normal" required value={accountForm.fullName} onChange={(e) => setAccountForm({ ...accountForm, fullName: e.target.value })} /></label>
+        <label className="block text-sm font-medium text-slate-700">Email<input className="mt-1 w-full rounded border p-2 font-normal" required type="email" value={accountForm.email} onChange={(e) => setAccountForm({ ...accountForm, email: e.target.value })} /></label>
+        <label className="block text-sm font-medium text-slate-700">New password (optional)<input className="mt-1 w-full rounded border p-2 font-normal" minLength="6" type="password" placeholder="Leave blank to keep current password" value={accountForm.password} onChange={(e) => setAccountForm({ ...accountForm, password: e.target.value })} /></label>
+        <div className="flex justify-end gap-2"><button type="button" className="rounded-lg border px-4 py-2 text-sm" onClick={() => setShowReset(false)}>Cancel</button><Button>Save changes</Button></div>
+      </form>
+    </div>}
     {message && <p className="rounded bg-slate-100 p-3 text-sm">{message}</p>}
   </main>;
 }
@@ -127,5 +133,5 @@ function Metric({ label, value, tone = 'light' }) {
 
 function PaymentBadge({ method }) {
   const isCash = method === 'CASH';
-  return <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${isCash ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'}`}>{isCash ? 'Cash' : 'Bank transfer'}</span>;
+  return <span className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${isCash ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'}`}>{isCash ? 'Cash' : 'Bank transfer'}</span>;
 }

@@ -1,5 +1,5 @@
 const bcrypt = require('bcryptjs');
-const { listCashiers, createCashier, updateCashierPassword } = require('../models/userModel');
+const { listCashiers, createCashier, updateCashierPassword, updateCashier } = require('../models/userModel');
 const { httpError } = require('../utils/errorHandler');
 
 async function cashiers(req, res) {
@@ -26,4 +26,18 @@ async function resetPassword(req, res) {
   res.json({ message: 'Cashier password updated' });
 }
 
-module.exports = { cashiers, create, resetPassword };
+async function update(req, res) {
+  const { fullName, email, password } = req.body;
+  if (!fullName || !email) throw httpError('Full name and email are required');
+  if (password && String(password).length < 6) throw httpError('Password must be at least 6 characters');
+  const cashier = await updateCashier({
+    id: req.params.id,
+    fullName: String(fullName).trim(),
+    email: String(email).trim().toLowerCase(),
+    passwordHash: password ? await bcrypt.hash(password, 10) : null
+  });
+  if (!cashier) throw httpError('Cashier not found', 404);
+  res.json(cashier);
+}
+
+module.exports = { cashiers, create, resetPassword, update };
