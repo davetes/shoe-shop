@@ -42,7 +42,7 @@ export default function CashiersPage() {
       .catch((error) => setMessage(error.response?.data?.error || 'Unable to load cashier sales'));
   }
 
-  useEffect(() => { loadSales(); }, [selectedCashierId]);
+  useEffect(() => { loadSales(); }, [selectedCashierId, fromDate, toDate]);
 
   async function createCashier(event) {
     event.preventDefault();
@@ -95,14 +95,13 @@ export default function CashiersPage() {
       {!cashiers.length ? <p className="text-sm text-slate-500">No cashiers found.</p> : <div className="overflow-auto"><table className="w-full text-left text-sm"><thead className="text-xs uppercase text-slate-500"><tr className="border-b"><th className="whitespace-nowrap p-3">Name</th><th className="whitespace-nowrap p-3">Email</th><th className="whitespace-nowrap p-3">Store</th><th className="whitespace-nowrap p-3">Action</th></tr></thead><tbody>{cashiers.map((cashier) => <tr className={`cursor-pointer border-b last:border-0 hover:bg-slate-50 ${cashier.id === selectedCashierId ? 'bg-blue-50' : ''}`} key={cashier.id} onClick={() => setSelectedCashierId(cashier.id)}><td className="whitespace-nowrap p-3 font-medium">{cashier.full_name}</td><td className="whitespace-nowrap p-3">{cashier.email}</td><td className="whitespace-nowrap p-3">{cashier.store_name}</td><td className="whitespace-nowrap p-3"><div className="flex gap-3 whitespace-nowrap"><button className="font-medium text-blue-700 underline" type="button" onClick={(event) => { event.stopPropagation(); setSelectedCashierId(cashier.id); }}>View details</button><button className="font-medium text-amber-700 underline" type="button" onClick={(event) => { event.stopPropagation(); setSelectedCashierId(cashier.id); setAccountForm({ fullName: cashier.full_name, email: cashier.email, password: '' }); setShowReset(true); }}>Edit account</button></div></td></tr>)}</tbody></table></div>}
     </Card>
     <Card title={`${selectedCashier?.full_name || 'Cashier'} sales`}>
-      <form className="mb-4 flex items-end gap-3 overflow-x-auto rounded-lg bg-slate-50 p-3" onSubmit={(event) => { event.preventDefault(); loadSales(); }}>
-        <label className="min-w-[145px] whitespace-nowrap text-sm">From<input className="mt-1 block w-full rounded border p-2" type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} /></label>
-        <label className="min-w-[145px] whitespace-nowrap text-sm">To<input className="mt-1 block w-full rounded border p-2" type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} /></label>
-        <button className="shrink-0 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white" type="submit">Filter</button>
+      <form className="mb-4 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-end gap-2 rounded-lg bg-slate-50 p-3" onSubmit={(event) => { event.preventDefault(); loadSales(); }}>
+        <label className="min-w-0 whitespace-nowrap text-sm">From<input className="mt-1 block min-w-0 w-full rounded border p-2 text-xs" type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} /></label>
+        <label className="min-w-0 whitespace-nowrap text-sm">To<input className="mt-1 block min-w-0 w-full rounded border p-2 text-xs" type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} /></label>
       </form>
-      <div className="mb-6">
-        <h3 className="mb-3 text-base font-semibold">Sales summary</h3>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="mb-4">
+        <h3 className="mb-2 text-sm font-semibold">Sales summary</h3>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
           <Metric label="Total revenue" value={analysis.total.toFixed(2)} tone="dark" />
           <Metric label="Cash revenue" value={analysis.CASH.toFixed(2)} tone="green" />
           <Metric label="Bank transfer" value={analysis.BANK_TRANSFER.toFixed(2)} tone="blue" />
@@ -111,7 +110,7 @@ export default function CashiersPage() {
         </div>
       </div>
       {!!productAnalysis.length && <div className="mb-6 rounded-lg border border-slate-200"><div className="border-b bg-slate-50 p-4"><h3 className="font-semibold">Products sold</h3><p className="mt-1 text-sm text-slate-500">Best-selling shoes for the selected cashier and period.</p></div><div className="overflow-auto"><table className="w-full text-left text-sm"><thead className="text-xs uppercase text-slate-500"><tr className="border-b"><th className="whitespace-nowrap p-3">Product</th><th className="whitespace-nowrap p-3">Pairs sold</th><th className="whitespace-nowrap p-3">Revenue</th></tr></thead><tbody>{productAnalysis.map(([name, item]) => <tr className="border-b last:border-0" key={name}><td className="whitespace-nowrap p-3 font-medium">{name}</td><td className="whitespace-nowrap p-3">{item.quantity}</td><td className="whitespace-nowrap p-3 font-medium">{item.amount.toFixed(2)}</td></tr>)}</tbody></table></div></div>}
-      <div className="rounded-lg border border-slate-200"><div className="border-b bg-slate-50 p-4"><h3 className="font-semibold">Sale details</h3><p className="mt-1 text-sm text-slate-500">Every sale recorded by this cashier.</p></div>{!sales.length ? <p className="p-4 text-sm text-slate-500">No sales found for this selection.</p> : <div className="overflow-auto"><table className="w-full text-left text-sm"><thead className="text-xs uppercase text-slate-500"><tr className="border-b"><th className="whitespace-nowrap p-3">Date</th><th className="whitespace-nowrap p-3">Items</th><th className="whitespace-nowrap p-3">Payment method</th><th className="whitespace-nowrap p-3">Total</th></tr></thead><tbody>{sales.map((sale) => <tr className="border-b last:border-0" key={sale.id}><td className="whitespace-nowrap p-3">{new Date(sale.created_at).toLocaleString()}</td><td className="whitespace-nowrap p-3">{sale.items.map((item) => `${item.name} x${item.quantity}`).join(', ')}</td><td className="whitespace-nowrap p-3"><PaymentBadge method={sale.payment_method} /></td><td className="whitespace-nowrap p-3 font-semibold">{Number(sale.total_amount).toFixed(2)}</td></tr>)}</tbody></table></div>}</div>
+      <div className="rounded-lg border border-slate-200"><div className="border-b bg-slate-50 p-4"><h3 className="font-semibold">Sale details</h3><p className="mt-1 text-sm text-slate-500">Every sale recorded by this cashier.</p></div>{!sales.length ? <p className="p-4 text-sm text-slate-500">No sales found for this selection.</p> : <div className="overflow-auto"><table className="w-full text-left text-sm"><thead className="text-xs uppercase text-slate-500"><tr className="border-b"><th className="whitespace-nowrap p-3">Date</th><th className="whitespace-nowrap p-3">Items</th><th className="whitespace-nowrap p-3">Payment method</th><th className="whitespace-nowrap p-3">Total</th></tr></thead><tbody>{sales.map((sale) => <tr className="border-b last:border-0" key={sale.id}><td className="whitespace-nowrap p-3">{formatSaleDate(sale.created_at)}</td><td className="whitespace-nowrap p-3">{sale.items.map((item) => `${item.name} x${item.quantity}`).join(', ')}</td><td className="whitespace-nowrap p-3"><PaymentBadge method={sale.payment_method} /></td><td className="whitespace-nowrap p-3 font-semibold">{Number(sale.total_amount).toFixed(2)}</td></tr>)}</tbody></table></div>}</div>
     </Card>
     {showReset && selectedCashier && <div className="fixed inset-0 z-10 flex items-center justify-center bg-slate-900/50 p-4" role="dialog" aria-modal="true" aria-labelledby="edit-account-title">
       <form onSubmit={updateAccount} className="w-full max-w-md space-y-4 rounded-xl bg-white p-6 shadow-xl">
@@ -128,10 +127,14 @@ export default function CashiersPage() {
 
 function Metric({ label, value, tone = 'light' }) {
   const styles = { dark: 'bg-slate-900 text-white', green: 'bg-emerald-50 text-emerald-900', blue: 'bg-blue-50 text-blue-900', light: 'bg-slate-50 text-slate-900' };
-  return <div className={`rounded-lg p-4 ${styles[tone]}`}><p className={`text-xs ${tone === 'dark' ? 'text-slate-300' : 'text-slate-500'}`}>{label}</p><p className="mt-1 text-xl font-bold">{value}</p></div>;
+  return <div className={`rounded-lg p-2.5 ${styles[tone]}`}><p className={`text-[11px] leading-tight ${tone === 'dark' ? 'text-slate-300' : 'text-slate-500'}`}>{label}</p><p className="mt-0.5 text-base font-bold">{value}</p></div>;
 }
 
 function PaymentBadge({ method }) {
   const isCash = method === 'CASH';
   return <span className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${isCash ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'}`}>{isCash ? 'Cash' : 'Bank transfer'}</span>;
+}
+
+function formatSaleDate(value) {
+  return new Date(value).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
