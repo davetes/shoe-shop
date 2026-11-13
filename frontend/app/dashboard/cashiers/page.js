@@ -6,7 +6,7 @@ import Button from '../../../components/ui/Button';
 import { useLanguage } from '../../../lib/language';
 import SalesDateFilter, { getSalesDateRange } from '../../../components/ui/SalesDateFilter';
 
-const emptyForm = { fullName: '', email: '', password: '', storeId: '1' };
+const emptyForm = { fullName: '', username: '', password: '', storeId: '1' };
 
 export default function CashiersPage() {
   const { t } = useLanguage();
@@ -19,7 +19,7 @@ export default function CashiersPage() {
   const [message, setMessage] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [showReset, setShowReset] = useState(false);
-  const [accountForm, setAccountForm] = useState({ fullName: '', email: '', password: '' });
+  const [accountForm, setAccountForm] = useState({ fullName: '', username: '', password: '' });
 
   function loadCashiers() {
     api.get('/users/cashiers').then(({ data }) => {
@@ -61,7 +61,7 @@ export default function CashiersPage() {
     if (!selectedCashierId) return;
     try {
       await api.patch(`/users/cashiers/${selectedCashierId}`, accountForm);
-      setAccountForm({ fullName: '', email: '', password: '' });
+      setAccountForm({ fullName: '', username: '', password: '' });
       setShowReset(false);
       setMessage('Cashier account updated.');
       loadCashiers();
@@ -89,12 +89,12 @@ export default function CashiersPage() {
       <div className="mb-4 flex items-center justify-between"><p className="text-sm text-slate-500">{t('Click a cashier to view their details and sales.')}</p><button className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700" type="button" onClick={() => setShowCreate(!showCreate)}>{t(showCreate ? 'Hide form' : '+ Create cashier')}</button></div>
       {showCreate && <form onSubmit={createCashier} className="mb-5 grid gap-3 rounded-lg bg-slate-50 p-4 md:grid-cols-5">
         <label className="text-sm font-medium text-slate-700">{t('Full name')}<input className="mt-1 w-full rounded border p-2 font-normal" required value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} /></label>
-        <label className="text-sm font-medium text-slate-700">{t('Email')}<input className="mt-1 w-full rounded border p-2 font-normal" required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></label>
+        <label className="text-sm font-medium text-slate-700">{t('Username')}<input className="mt-1 w-full rounded border p-2 font-normal" required minLength="3" maxLength="40" pattern="[A-Za-z0-9._-]+" autoComplete="username" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} /></label>
         <label className="text-sm font-medium text-slate-700">{t('Temporary password')}<input className="mt-1 w-full rounded border p-2 font-normal" required minLength="6" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} /></label>
         <label className="text-sm font-medium text-slate-700">{t('Store')}<select className="mt-1 w-full rounded border p-2 font-normal" value={form.storeId} onChange={(e) => setForm({ ...form, storeId: e.target.value })}>{stores.map((store) => <option key={store.id} value={store.id}>{store.name}</option>)}</select></label>
         <div className="flex items-end"><Button>{t('Create account')}</Button></div>
       </form>}
-      {!cashiers.length ? <p className="text-sm text-slate-500">{t('No cashiers found.')}</p> : <div className="overflow-auto"><table className="w-full text-left text-sm"><thead className="text-xs uppercase text-slate-500"><tr className="border-b"><th className="whitespace-nowrap p-3">{t('Name')}</th><th className="whitespace-nowrap p-3">{t('Email')}</th><th className="whitespace-nowrap p-3">{t('Store')}</th><th className="whitespace-nowrap p-3">{t('Action')}</th></tr></thead><tbody>{cashiers.map((cashier) => <tr className={`cursor-pointer border-b last:border-0 hover:bg-slate-50 ${cashier.id === selectedCashierId ? 'bg-blue-50' : ''}`} key={cashier.id} onClick={() => setSelectedCashierId(cashier.id)}><td className="whitespace-nowrap p-3 font-medium">{cashier.full_name}</td><td className="whitespace-nowrap p-3">{cashier.email}</td><td className="whitespace-nowrap p-3">{cashier.store_name}</td><td className="whitespace-nowrap p-3"><div className="flex gap-3 whitespace-nowrap"><button className="font-medium text-blue-700 underline" type="button" onClick={(event) => { event.stopPropagation(); setSelectedCashierId(cashier.id); }}>{t('View details')}</button><button className="font-medium text-amber-700 underline" type="button" onClick={(event) => { event.stopPropagation(); setSelectedCashierId(cashier.id); setAccountForm({ fullName: cashier.full_name, email: cashier.email, password: '' }); setShowReset(true); }}>{t('Edit account')}</button></div></td></tr>)}</tbody></table></div>}
+      {!cashiers.length ? <p className="text-sm text-slate-500">{t('No cashiers found.')}</p> : <div className="overflow-auto"><table className="w-full text-left text-sm"><thead className="text-xs uppercase text-slate-500"><tr className="border-b"><th className="whitespace-nowrap p-3">{t('Name')}</th><th className="whitespace-nowrap p-3">{t('Username')}</th><th className="whitespace-nowrap p-3">{t('Store')}</th><th className="whitespace-nowrap p-3">{t('Action')}</th></tr></thead><tbody>{cashiers.map((cashier) => <tr className={`cursor-pointer border-b last:border-0 hover:bg-slate-50 ${cashier.id === selectedCashierId ? 'bg-blue-50' : ''}`} key={cashier.id} onClick={() => setSelectedCashierId(cashier.id)}><td className="whitespace-nowrap p-3 font-medium">{cashier.full_name}</td><td className="whitespace-nowrap p-3">{cashier.username}</td><td className="whitespace-nowrap p-3">{cashier.store_name}</td><td className="whitespace-nowrap p-3"><div className="flex gap-3 whitespace-nowrap"><button className="font-medium text-blue-700 underline" type="button" onClick={(event) => { event.stopPropagation(); setSelectedCashierId(cashier.id); }}>{t('View details')}</button><button className="font-medium text-amber-700 underline" type="button" onClick={(event) => { event.stopPropagation(); setSelectedCashierId(cashier.id); setAccountForm({ fullName: cashier.full_name, username: cashier.username, password: '' }); setShowReset(true); }}>{t('Edit account')}</button></div></td></tr>)}</tbody></table></div>}
     </Card>
     <Card title={`${selectedCashier?.full_name || t('Cashier')} ${t('sales')}`}>
       <SalesDateFilter value={dateRange} onChange={setDateRange} />
@@ -115,7 +115,7 @@ export default function CashiersPage() {
       <form onSubmit={updateAccount} className="w-full max-w-md space-y-4 rounded-xl bg-white p-6 shadow-xl">
         <div className="flex items-center justify-between"><div><h2 id="edit-account-title" className="text-lg font-semibold">{t('Edit cashier account')}</h2><p className="text-sm text-slate-500">{selectedCashier.store_name}</p></div><button type="button" className="text-2xl text-slate-500" aria-label="Close edit account dialog" onClick={() => setShowReset(false)}>×</button></div>
         <label className="block text-sm font-medium text-slate-700">{t('Full name')}<input className="mt-1 w-full rounded border p-2 font-normal" required value={accountForm.fullName} onChange={(e) => setAccountForm({ ...accountForm, fullName: e.target.value })} /></label>
-        <label className="block text-sm font-medium text-slate-700">{t('Email')}<input className="mt-1 w-full rounded border p-2 font-normal" required type="email" value={accountForm.email} onChange={(e) => setAccountForm({ ...accountForm, email: e.target.value })} /></label>
+        <label className="block text-sm font-medium text-slate-700">{t('Username')}<input className="mt-1 w-full rounded border p-2 font-normal" required minLength="3" maxLength="40" pattern="[A-Za-z0-9._-]+" autoComplete="username" value={accountForm.username} onChange={(e) => setAccountForm({ ...accountForm, username: e.target.value })} /></label>
         <label className="block text-sm font-medium text-slate-700">{t('New password (optional)')}<input className="mt-1 w-full rounded border p-2 font-normal" minLength="6" type="password" placeholder={t('Leave blank to keep current password')} value={accountForm.password} onChange={(e) => setAccountForm({ ...accountForm, password: e.target.value })} /></label>
         <div className="flex justify-end gap-2"><button type="button" className="rounded-lg border px-4 py-2 text-sm" onClick={() => setShowReset(false)}>{t('Cancel')}</button><Button>{t('Save changes')}</Button></div>
       </form>

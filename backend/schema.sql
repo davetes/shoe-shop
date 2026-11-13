@@ -10,14 +10,17 @@ CREATE TABLE stores (
 CREATE TABLE users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   full_name VARCHAR(120) NOT NULL,
-  email VARCHAR(255) NOT NULL UNIQUE,
+  username VARCHAR(80) NOT NULL,
   password_hash TEXT NOT NULL,
   role VARCHAR(20) NOT NULL CHECK (role IN ('OWNER', 'CASHIER')),
   store_id INTEGER REFERENCES stores(id) ON DELETE RESTRICT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT users_username_unique UNIQUE (username),
   CONSTRAINT cashier_must_have_store CHECK (role = 'OWNER' OR store_id IS NOT NULL),
   CONSTRAINT owner_must_not_have_store CHECK (role = 'CASHIER' OR store_id IS NULL)
 );
+
+CREATE UNIQUE INDEX users_username_lower_unique ON users (LOWER(username));
 
 CREATE TABLE products (
   id SERIAL PRIMARY KEY,
@@ -82,14 +85,11 @@ CREATE INDEX inventory_low_stock_idx ON inventory(store_id, quantity);
 
 INSERT INTO stores (name) VALUES ('Store 1'), ('Store 2'), ('Store 3');
 
-INSERT INTO users (full_name, email, password_hash, role)
-VALUES ('Shop Owner', 'owner@shoeshop.local', crypt('owner123', gen_salt('bf')), 'OWNER');
-
-INSERT INTO users (full_name, email, password_hash, role, store_id)
+INSERT INTO users (full_name, username, password_hash, role, store_id)
 VALUES
-  ('Cashier 1', 'cashier1@shoeshop.local', crypt('cashier123', gen_salt('bf')), 'CASHIER', 1),
-  ('Cashier 2', 'cashier2@shoeshop.local', crypt('cashier123', gen_salt('bf')), 'CASHIER', 2),
-  ('Cashier 3', 'cashier3@shoeshop.local', crypt('cashier123', gen_salt('bf')), 'CASHIER', 3);
+  ('Cashier 1', 'cashier1', crypt('cashier123', gen_salt('bf')), 'CASHIER', 1),
+  ('Cashier 2', 'cashier2', crypt('cashier123', gen_salt('bf')), 'CASHIER', 2),
+  ('Cashier 3', 'cashier3', crypt('cashier123', gen_salt('bf')), 'CASHIER', 3);
 
 INSERT INTO products (name, size, color, cost_price, selling_price)
 VALUES

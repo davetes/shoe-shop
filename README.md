@@ -4,24 +4,35 @@ This is a lightweight Next.js + Express + PostgreSQL monorepo for three stores.
 
 ## Step 1: Database
 
-Create a PostgreSQL database named `shoe_shop`, copy `backend/.env.example` to `backend/.env`, then run:
+Create a PostgreSQL database named `shoe_shop` and copy `backend/.env.example` to `backend/.env`. Set a private value for `OWNER_PASSWORD` in `backend/.env`; this is the Owner's login password.
+
+For a fresh database, run:
 
 ```bash
 psql "$DATABASE_URL" -f backend/schema.sql
 ```
 
-The seed credentials are:
+For an existing installation, do not rerun the schema. Apply these migrations in order before starting the backend:
 
-- Owner: `owner@shoeshop.local` / `owner123`
-- Cashiers: `cashier1@shoeshop.local`, `cashier2@shoeshop.local`, `cashier3@shoeshop.local` / `cashier123`
+```bash
+psql "$DATABASE_URL" -f backend/migrations/001_add_usernames.sql
+psql "$DATABASE_URL" -f backend/migrations/002_remove_email.sql
+```
 
-## Step 2: Backend
+The schema seeds three cashier accounts. They sign in with these usernames:
+
+- `cashier1`, `cashier2`, and `cashier3` / `cashier123`
+
+## Step 2: Configure the Owner account and start the backend
 
 ```bash
 cd backend
 npm install
+npm run seed:owner
 npm run dev
 ```
+
+The Owner signs in with username `owner` and the password in `backend/.env`. Run `npm run seed:owner` again after changing `OWNER_PASSWORD` to update the existing Owner password. Cashiers sign in with their usernames (the seeded accounts are `cashier1`, `cashier2`, and `cashier3`). Do not use the example placeholder in production.
 
 Key endpoints are `POST /api/auth/login`, owner-only `GET/POST /api/products`, `GET/POST /api/inventory`, `GET/POST /api/sales`, and owner-only `GET /api/reports/dashboard`.
 

@@ -7,12 +7,14 @@ async function cashiers(req, res) {
 }
 
 async function create(req, res) {
-  const { fullName, email, password, storeId } = req.body;
-  if (!fullName || !email || !password || !storeId) throw httpError('Full name, email, password, and store are required');
+  const { fullName, username, password, storeId } = req.body;
+  const normalizedUsername = String(username || '').trim().toLowerCase();
+  if (!fullName || !normalizedUsername || !password || !storeId) throw httpError('Full name, username, password, and store are required');
+  if (!/^[a-z0-9._-]{3,40}$/.test(normalizedUsername)) throw httpError('Username must be 3-40 characters and use letters, numbers, dots, underscores, or hyphens');
   if (String(password).length < 6) throw httpError('Password must be at least 6 characters');
   res.status(201).json(await createCashier({
     fullName: String(fullName).trim(),
-    email: String(email).trim().toLowerCase(),
+    username: normalizedUsername,
     passwordHash: await bcrypt.hash(password, 10),
     storeId: Number(storeId)
   }));
@@ -27,13 +29,15 @@ async function resetPassword(req, res) {
 }
 
 async function update(req, res) {
-  const { fullName, email, password } = req.body;
-  if (!fullName || !email) throw httpError('Full name and email are required');
+  const { fullName, username, password } = req.body;
+  const normalizedUsername = String(username || '').trim().toLowerCase();
+  if (!fullName || !normalizedUsername) throw httpError('Full name and username are required');
+  if (!/^[a-z0-9._-]{3,40}$/.test(normalizedUsername)) throw httpError('Username must be 3-40 characters and use letters, numbers, dots, underscores, or hyphens');
   if (password && String(password).length < 6) throw httpError('Password must be at least 6 characters');
   const cashier = await updateCashier({
     id: req.params.id,
     fullName: String(fullName).trim(),
-    email: String(email).trim().toLowerCase(),
+    username: normalizedUsername,
     passwordHash: password ? await bcrypt.hash(password, 10) : null
   });
   if (!cashier) throw httpError('Cashier not found', 404);

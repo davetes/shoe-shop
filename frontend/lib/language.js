@@ -4,7 +4,6 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 const translations = {
   'Welcome back': 'እንኳን ደህና መጡ',
   'Sign in to manage your shoe shop': 'የጫማ መደብርዎን ለማስተዳደር ይግቡ',
-  Email: 'ኢሜይል',
   Password: 'የይለፍ ቃል',
   'Enter your password': 'የይለፍ ቃልዎን ያስገቡ',
   'Sign in': 'ግባ',
@@ -138,6 +137,9 @@ const translations = {
   'Last month': 'ያለፈው ወር',
   'All time': 'ሁሉም ጊዜ',
   'Choose dates': 'ቀኖችን ይምረጡ',
+  'Use the username and password provided by the Owner.': 'በባለቤቱ የተሰጠዎትን የተጠቃሚ ስምና የይለፍ ቃል ይጠቀሙ።',
+  Username: 'የተጠቃሚ ስም',
+  'Enter your username': 'የተጠቃሚ ስምዎን ያስገቡ',
 };
 
 const LanguageContext = createContext({ language: 'en', setLanguage: () => {}, t: (text) => text });
