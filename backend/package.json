@@ -2,7 +2,9 @@
   "name": "shoe-shop-backend",
   "private": true,
   "scripts": {
+    "predev": "npm run seed:owner",
     "dev": "nodemon src/server.js",
+    "prestart": "npm run seed:owner",
     "start": "node src/server.js",
     "seed:owner": "node seed-owner.js"
   },
