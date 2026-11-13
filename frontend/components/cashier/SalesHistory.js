@@ -3,24 +3,24 @@ import { useEffect, useState } from 'react';
 import api from '../../lib/api';
 import Card from '../ui/Card';
 import { useLanguage } from '../../lib/language';
+import SalesDateFilter, { getSalesDateRange } from '../ui/SalesDateFilter';
 
 export default function SalesHistory() {
   const { t } = useLanguage();
   const [sales, setSales] = useState([]);
   const [error, setError] = useState('');
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
+  const [dateRange, setDateRange] = useState(() => getSalesDateRange('thisWeek'));
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
   function loadSales() {
     setError('');
-    api.get('/sales', { params: { from: fromDate || undefined, to: toDate || undefined } })
+    api.get('/sales', { params: { from: dateRange.from || undefined, to: dateRange.to || undefined } })
       .then(({ data }) => setSales(data))
       .catch((requestError) => setError(requestError.response?.data?.error || 'Unable to load sales'));
   }
 
-  useEffect(() => { loadSales(); }, [fromDate, toDate]);
+  useEffect(() => { setPage(1); loadSales(); }, [dateRange.from, dateRange.to]);
 
   const totalAmount = sales.reduce((sum, sale) => sum + Number(sale.total_amount), 0);
   const pairsSold = sales.reduce((sum, sale) => sum + sale.items.reduce((itemSum, item) => itemSum + Number(item.quantity), 0), 0);
@@ -28,10 +28,7 @@ export default function SalesHistory() {
   const bankAmount = sales.filter((sale) => sale.payment_method === 'BANK_TRANSFER').reduce((sum, sale) => sum + Number(sale.total_amount), 0);
 
   return <Card title="My sales">
-    <form className="mb-4 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-end gap-2 rounded-lg bg-slate-50 p-3" onSubmit={(event) => { event.preventDefault(); loadSales(); }}>
-      <label className="min-w-0 whitespace-nowrap text-sm">{t('From')}<input className="mt-1 block min-w-0 w-full rounded border p-2 text-xs" type="date" value={fromDate} onChange={(event) => { setFromDate(event.target.value); setPage(1); }} /></label>
-      <label className="min-w-0 whitespace-nowrap text-sm">{t('To')}<input className="mt-1 block min-w-0 w-full rounded border p-2 text-xs" type="date" value={toDate} onChange={(event) => { setToDate(event.target.value); setPage(1); }} /></label>
-    </form>
+    <SalesDateFilter value={dateRange} onChange={setDateRange} />
     {error && <p className="text-sm text-red-600">{error}</p>}
     {!error && !sales.length && <p className="text-sm text-slate-500">{t('You have not recorded any sales yet.')}</p>}
     {!!sales.length && <><div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4"><SummaryCard label={t('Total amount')} value={totalAmount.toFixed(2)} /><SummaryCard label={t('Sales')} value={sales.length} /><SummaryCard label={t('Pairs sold')} value={pairsSold} /><SummaryCard label={t('Cash / Bank')} value={`${cashAmount.toFixed(2)} / ${bankAmount.toFixed(2)}`} /></div><div className="overflow-auto"><table className="w-full text-left text-sm">

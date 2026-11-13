@@ -129,6 +129,15 @@ const translations = {
   'Owner Dashboard': 'የባለቤት ዳሽቦርድ',
   'Shoe Shop Overview': 'የጫማ መደብር አጠቃላይ እይታ',
   'BANK TRANSFER': 'የባንክ ማስተላለፍ',
+  'Choose period': 'የጊዜ ክልል ይምረጡ',
+  Today: 'ዛሬ',
+  Yesterday: 'ትናንት',
+  'This week (Monday-Sunday)': 'የዚህ ሳምንት (ሰኞ-እሁድ)',
+  'Last week (Monday-Sunday)': 'ያለፈው ሳምንት (ሰኞ-እሁድ)',
+  'This month': 'የዚህ ወር',
+  'Last month': 'ያለፈው ወር',
+  'All time': 'ሁሉም ጊዜ',
+  'Choose dates': 'ቀኖችን ይምረጡ',
 };
 
 const LanguageContext = createContext({ language: 'en', setLanguage: () => {}, t: (text) => text });

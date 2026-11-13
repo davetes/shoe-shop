@@ -4,6 +4,7 @@ import api from '../../../lib/api';
 import Card from '../../../components/ui/Card';
 import Button from '../../../components/ui/Button';
 import { useLanguage } from '../../../lib/language';
+import SalesDateFilter, { getSalesDateRange } from '../../../components/ui/SalesDateFilter';
 
 const emptyForm = { fullName: '', email: '', password: '', storeId: '1' };
 
@@ -13,8 +14,7 @@ export default function CashiersPage() {
   const [stores, setStores] = useState([]);
   const [sales, setSales] = useState([]);
   const [selectedCashierId, setSelectedCashierId] = useState('');
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
+  const [dateRange, setDateRange] = useState(() => getSalesDateRange('thisWeek'));
   const [form, setForm] = useState(emptyForm);
   const [message, setMessage] = useState('');
   const [showCreate, setShowCreate] = useState(false);
@@ -39,12 +39,12 @@ export default function CashiersPage() {
 
   function loadSales() {
     if (!selectedCashierId) return;
-    api.get('/sales', { params: { cashierId: selectedCashierId, from: fromDate || undefined, to: toDate || undefined } })
+    api.get('/sales', { params: { cashierId: selectedCashierId, from: dateRange.from || undefined, to: dateRange.to || undefined } })
       .then(({ data }) => setSales(data))
       .catch((error) => setMessage(error.response?.data?.error || 'Unable to load cashier sales'));
   }
 
-  useEffect(() => { loadSales(); }, [selectedCashierId, fromDate, toDate]);
+  useEffect(() => { loadSales(); }, [selectedCashierId, dateRange.from, dateRange.to]);
 
   async function createCashier(event) {
     event.preventDefault();
@@ -97,10 +97,7 @@ export default function CashiersPage() {
       {!cashiers.length ? <p className="text-sm text-slate-500">{t('No cashiers found.')}</p> : <div className="overflow-auto"><table className="w-full text-left text-sm"><thead className="text-xs uppercase text-slate-500"><tr className="border-b"><th className="whitespace-nowrap p-3">{t('Name')}</th><th className="whitespace-nowrap p-3">{t('Email')}</th><th className="whitespace-nowrap p-3">{t('Store')}</th><th className="whitespace-nowrap p-3">{t('Action')}</th></tr></thead><tbody>{cashiers.map((cashier) => <tr className={`cursor-pointer border-b last:border-0 hover:bg-slate-50 ${cashier.id === selectedCashierId ? 'bg-blue-50' : ''}`} key={cashier.id} onClick={() => setSelectedCashierId(cashier.id)}><td className="whitespace-nowrap p-3 font-medium">{cashier.full_name}</td><td className="whitespace-nowrap p-3">{cashier.email}</td><td className="whitespace-nowrap p-3">{cashier.store_name}</td><td className="whitespace-nowrap p-3"><div className="flex gap-3 whitespace-nowrap"><button className="font-medium text-blue-700 underline" type="button" onClick={(event) => { event.stopPropagation(); setSelectedCashierId(cashier.id); }}>{t('View details')}</button><button className="font-medium text-amber-700 underline" type="button" onClick={(event) => { event.stopPropagation(); setSelectedCashierId(cashier.id); setAccountForm({ fullName: cashier.full_name, email: cashier.email, password: '' }); setShowReset(true); }}>{t('Edit account')}</button></div></td></tr>)}</tbody></table></div>}
     </Card>
     <Card title={`${selectedCashier?.full_name || t('Cashier')} ${t('sales')}`}>
-      <form className="mb-4 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-end gap-2 rounded-lg bg-slate-50 p-3" onSubmit={(event) => { event.preventDefault(); loadSales(); }}>
-        <label className="min-w-0 whitespace-nowrap text-sm">{t('From')}<input className="mt-1 block min-w-0 w-full rounded border p-2 text-xs" type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} /></label>
-        <label className="min-w-0 whitespace-nowrap text-sm">{t('To')}<input className="mt-1 block min-w-0 w-full rounded border p-2 text-xs" type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} /></label>
-      </form>
+      <SalesDateFilter value={dateRange} onChange={setDateRange} />
       <div className="mb-4">
         <h3 className="mb-2 text-sm font-semibold">{t('Sales summary')}</h3>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
