@@ -6,17 +6,12 @@ This is a lightweight Next.js + Express + PostgreSQL monorepo for three stores.
 
 Create a PostgreSQL database named `shoe_shop` and copy `backend/.env.example` to `backend/.env`. Set `OWNER_USERNAME` and a private value for `OWNER_PASSWORD` in `backend/.env`; these are the Owner's login credentials.
 
-For a fresh database, run:
+Run the database setup script from the backend folder. It creates a fresh schema or applies the pending migrations to an existing database:
 
 ```bash
-psql "$DATABASE_URL" -f backend/schema.sql
-```
-
-For an existing installation, do not rerun the schema. Apply these migrations in order before starting the backend:
-
-```bash
-psql "$DATABASE_URL" -f backend/migrations/001_add_usernames.sql
-psql "$DATABASE_URL" -f backend/migrations/002_remove_email.sql
+cd backend
+npm install
+npm run setup:db
 ```
 
 The schema seeds three cashier accounts. They sign in with these usernames:
@@ -27,12 +22,10 @@ The schema seeds three cashier accounts. They sign in with these usernames:
 
 ```bash
 cd backend
-npm install
-npm run seed:owner
 npm run dev
 ```
 
-The Owner signs in with the username and password in `backend/.env`. Starting the backend synchronizes the Owner account from these values; you can also run `npm run seed:owner` after changing either value. Cashiers sign in with their usernames (the seeded accounts are `cashier1`, `cashier2`, and `cashier3`). Do not use the example password placeholder in production.
+Starting the backend synchronizes the Owner account from `OWNER_USERNAME` and `OWNER_PASSWORD` in `backend/.env`. You can also run `npm run seed:owner` to apply those values without starting the server. Cashiers sign in with their usernames (the seeded accounts are `cashier1`, `cashier2`, and `cashier3`). Do not use the example password placeholder in production.
 
 Key endpoints are `POST /api/auth/login`, owner-only `GET/POST /api/products`, `GET/POST /api/inventory`, `GET/POST /api/sales`, and owner-only `GET /api/reports/dashboard`.
 
