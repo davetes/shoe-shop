@@ -111,7 +111,7 @@ export default function InventoryPage() {
 
   return <main className="space-y-6">
     <Card title="Inventory actions">
-      <div className="flex flex-wrap gap-3"><button className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white" type="button" onClick={() => setShowCreate(!showCreate)}>{t(showCreate ? 'Hide add shoe form' : '+ Add new shoe')}</button><button className="rounded-lg border px-4 py-2 text-sm font-medium" type="button" onClick={() => setShowStores(!showStores)}>{t(showStores ? 'Hide store management' : 'Manage stores')}</button></div>
+      <div className="flex flex-wrap gap-3"><button className="rounded-lg border border-slate-900 bg-transparent px-4 py-2 text-sm font-medium text-slate-900 hover:border-slate-600 hover:text-slate-600" type="button" onClick={() => setShowCreate(!showCreate)}>{t(showCreate ? 'Hide add shoe form' : '+ Add new shoe')}</button><button className="rounded-lg border px-4 py-2 text-sm font-medium" type="button" onClick={() => setShowStores(!showStores)}>{t(showStores ? 'Hide store management' : 'Manage stores')}</button></div>
     </Card>
     {showCreate && <Card title="Add a new shoe">
       <form onSubmit={createShoe} className="grid gap-3 md:grid-cols-2">
