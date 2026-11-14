@@ -9,5 +9,5 @@ export default function Home() {
     const user = getUser();
     router.replace(user?.role === 'OWNER' ? '/dashboard' : user ? '/cashier/sales' : '/login');
   }, [router]);
-  return <main className="p-8">Loading...</main>;
+  return <main className="p-8"></main>;
 }
