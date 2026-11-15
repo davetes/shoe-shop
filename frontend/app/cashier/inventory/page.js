@@ -69,36 +69,43 @@ export default function CashierInventoryPage() {
     }
   }
 
-  return <main className="mx-auto max-w-4xl">
-    <Card title="Add a new shoe">
-      <p className="mb-4 text-sm text-slate-600">{t('Create a shoe and add its initial quantity to your assigned store.')}</p>
+  return <main className="mx-auto max-w-5xl px-4 py-6 md:px-6">
+    <Card title={t('Add stock to this store')}>
+      <p className="mb-5 text-sm leading-relaxed text-slate-600">
+        {t('Enter the shoe details and the number of pairs available in your store.')}
+      </p>
       <form onSubmit={addShoe} className="grid gap-4 md:grid-cols-2">
-        <Field label={t('Shoe name')}><input className="rounded border p-2" required placeholder="e.g. Classic Runner" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></Field>
-        <Field label={t('Size')}><input className="rounded border p-2" required placeholder="e.g. 42" value={form.size} onChange={(event) => setForm({ ...form, size: event.target.value })} /></Field>
-        <Field label={t('Color')}><input className="rounded border p-2" required placeholder="e.g. Black" value={form.color} onChange={(event) => setForm({ ...form, color: event.target.value })} /></Field>
-        <Field label={t('Selling price')}><input className="rounded border p-2" required min="0" step="0.01" type="number" placeholder="0.00" value={form.sellingPrice} onChange={(event) => setForm({ ...form, sellingPrice: event.target.value })} /></Field>
-        <Field label={t('Cost price (optional)')}><input className="rounded border p-2" min="0" step="0.01" type="number" placeholder="0.00" value={form.costPrice} onChange={(event) => setForm({ ...form, costPrice: event.target.value })} /></Field>
-        <Field label={t('Initial stock (pairs)')}><input className="rounded border p-2" required min="1" type="number" placeholder="e.g. 10" value={form.stock} onChange={(event) => setForm({ ...form, stock: event.target.value })} /></Field>
-        <Button>{t('Add shoe to my store')}</Button>
+        <Field label={t('Shoe name')}><input className="rounded-xl border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-400" required placeholder="Classic Runner" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></Field>
+        <Field label={t('Size')}><input className="rounded-xl border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-400" required placeholder="42" value={form.size} onChange={(event) => setForm({ ...form, size: event.target.value })} /></Field>
+        <Field label={t('Color')}><input className="rounded-xl border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-400" required placeholder="Black" value={form.color} onChange={(event) => setForm({ ...form, color: event.target.value })} /></Field>
+        <Field label={t('Selling price')}><input className="rounded-xl border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-400" required min="0" step="0.01" type="number" placeholder="0.00" value={form.sellingPrice} onChange={(event) => setForm({ ...form, sellingPrice: event.target.value })} /></Field>
+        <Field label={t('Cost price')}><input className="rounded-xl border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-400" min="0" step="0.01" type="number" placeholder="0.00" value={form.costPrice} onChange={(event) => setForm({ ...form, costPrice: event.target.value })} /></Field>
+        <Field label={t('Stock')}><input className="rounded-xl border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-400" required min="1" type="number" placeholder="10" value={form.stock} onChange={(event) => setForm({ ...form, stock: event.target.value })} /></Field>
+        <div className="md:col-span-2 flex justify-end">
+          <Button className="min-w-[180px]">{t('Add to stock')}</Button>
+        </div>
       </form>
     </Card>
-    <Card title="Shoes in my store" className="mt-6">
-      {!inventory.length ? <p className="text-sm text-slate-500">No shoes are currently recorded in your store.</p> : <div className="overflow-auto"><table className="w-full text-left text-sm">
-        <thead><tr className="border-b"><th className="whitespace-nowrap p-2">{t('Shoe')}</th><th className="whitespace-nowrap p-2">{t('Size')}</th><th className="whitespace-nowrap p-2">{t('Color')}</th><th className="whitespace-nowrap p-2">{t('Stock')}</th><th className="whitespace-nowrap p-2">{t('Action')}</th></tr></thead>
-        <tbody>{inventory.map((row) => <tr className="border-b" key={row.product_id}><td className="whitespace-nowrap p-2">{row.name}</td><td className="whitespace-nowrap p-2">{row.size}</td><td className="whitespace-nowrap p-2">{row.color}</td><td className="whitespace-nowrap p-2">{row.quantity}</td><td className="whitespace-nowrap p-2"><button className="text-blue-700 underline" type="button" onClick={() => beginEdit({ ...row })}>{t('Edit')}</button></td></tr>)}</tbody>
+
+    <Card title={t('Stock in this store')} className="mt-6">
+      {!inventory.length ? <p className="text-sm text-slate-500">{t('No shoes are available in this store yet.')}</p> : <div className="overflow-auto"><table className="w-full text-left text-sm">
+        <thead><tr className="border-b border-slate-200"><th className="whitespace-nowrap p-2 font-semibold text-slate-700">{t('Shoe')}</th><th className="whitespace-nowrap p-2 font-semibold text-slate-700">{t('Size')}</th><th className="whitespace-nowrap p-2 font-semibold text-slate-700">{t('Color')}</th><th className="whitespace-nowrap p-2 font-semibold text-slate-700">{t('Pairs')}</th><th className="whitespace-nowrap p-2 font-semibold text-slate-700">{t('Action')}</th></tr></thead>
+        <tbody>{inventory.map((row) => <tr className="border-b border-slate-100" key={row.product_id}><td className="whitespace-nowrap p-2 text-slate-800">{row.name}</td><td className="whitespace-nowrap p-2 text-slate-800">{row.size}</td><td className="whitespace-nowrap p-2 text-slate-800">{row.color}</td><td className="whitespace-nowrap p-2 text-slate-800">{row.quantity}</td><td className="whitespace-nowrap p-2"><button className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900" type="button" onClick={() => beginEdit({ ...row })}>{t('Edit')}</button></td></tr>)}</tbody>
       </table></div>}
     </Card>
+
     {editing && <div className="fixed inset-0 z-10 flex items-center justify-center bg-slate-900/50 p-4" role="dialog" aria-modal="true" aria-labelledby="edit-shoe-title">
-      <form onSubmit={saveEdit} className="w-full max-w-lg space-y-4 rounded-xl bg-white p-6 shadow-xl">
-        <div className="flex items-center justify-between"><h2 id="edit-shoe-title" className="text-lg font-semibold">{t('Edit shoe')}</h2><button type="button" className="text-2xl text-slate-500" aria-label="Close edit dialog" onClick={() => setEditing(null)}>×</button></div>
-        <Field label={t('Shoe name')}><input className="w-full rounded border p-2" required placeholder={t('Shoe name')} value={editing.name} onChange={(event) => setEditing({ ...editing, name: event.target.value })} /></Field>
-        <div className="grid gap-4 sm:grid-cols-2"><Field label={t('Size')}><input className="w-full rounded border p-2" required placeholder={t('Size')} value={editing.size} onChange={(event) => setEditing({ ...editing, size: event.target.value })} /></Field><Field label={t('Color')}><input className="w-full rounded border p-2" required placeholder={t('Color')} value={editing.color} onChange={(event) => setEditing({ ...editing, color: event.target.value })} /></Field></div>
-        <div className="grid gap-4 sm:grid-cols-2"><Field label={t('Cost price')}><input className="w-full rounded border p-2" required min="0" step="0.01" type="number" placeholder="0.00" value={editing.cost_price} onChange={(event) => setEditing({ ...editing, cost_price: event.target.value })} /></Field><Field label={t('Selling price')}><input className="w-full rounded border p-2" required min="0" step="0.01" type="number" placeholder="0.00" value={editing.selling_price} onChange={(event) => setEditing({ ...editing, selling_price: event.target.value })} /></Field></div>
-        <Field label={t('Stock quantity (pairs)')}><input className="w-full rounded border p-2" required min="0" type="number" placeholder={t('Stock quantity')} value={editing.quantity} onChange={(event) => setEditing({ ...editing, quantity: event.target.value })} /></Field>
-        <div className="flex justify-end gap-2"><button type="button" className="rounded-lg border px-4 py-2 text-sm" onClick={() => setEditing(null)}>{t('Cancel')}</button><Button>{t('Save changes')}</Button></div>
+      <form onSubmit={saveEdit} className="w-full max-w-lg space-y-4 rounded-2xl bg-white p-6 shadow-xl">
+        <div className="flex items-center justify-between"><h2 id="edit-shoe-title" className="text-lg font-semibold text-slate-900">{t('Update shoe details')}</h2><button type="button" className="text-2xl text-slate-500" aria-label="Close edit dialog" onClick={() => setEditing(null)}>×</button></div>
+        <Field label={t('Shoe name')}><input className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-400" required value={editing.name} onChange={(event) => setEditing({ ...editing, name: event.target.value })} /></Field>
+        <div className="grid gap-4 sm:grid-cols-2"><Field label={t('Size')}><input className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-400" required value={editing.size} onChange={(event) => setEditing({ ...editing, size: event.target.value })} /></Field><Field label={t('Color')}><input className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-400" required value={editing.color} onChange={(event) => setEditing({ ...editing, color: event.target.value })} /></Field></div>
+        <div className="grid gap-4 sm:grid-cols-2"><Field label={t('Cost price')}><input className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-400" required min="0" step="0.01" type="number" value={editing.cost_price} onChange={(event) => setEditing({ ...editing, cost_price: event.target.value })} /></Field><Field label={t('Selling price')}><input className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-400" required min="0" step="0.01" type="number" value={editing.selling_price} onChange={(event) => setEditing({ ...editing, selling_price: event.target.value })} /></Field></div>
+        <Field label={t('Pairs in stock')}><input className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-400" required min="0" type="number" value={editing.quantity} onChange={(event) => setEditing({ ...editing, quantity: event.target.value })} /></Field>
+        <div className="flex justify-end gap-2"><button type="button" className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700" onClick={() => setEditing(null)}>{t('Cancel')}</button><Button>{t('Save')}</Button></div>
       </form>
     </div>}
-    {message && <p className="mt-4 rounded bg-slate-100 p-3 text-sm">{message}</p>}
+
+    {message && <p className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">{message}</p>}
   </main>;
 }
 
