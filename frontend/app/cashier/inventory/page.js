@@ -25,20 +25,32 @@ export default function CashierInventoryPage() {
   async function addShoe(event) {
     event.preventDefault();
     try {
-      const { data: product } = await api.post('/products', {
-        name: form.name,
-        size: form.size,
-        color: form.color,
+      const { data: products } = await api.get('/products');
+      const productName = form.name.trim();
+      const productSize = form.size.trim();
+      const productColor = form.color.trim();
+      const existingProduct = products.find((product) =>
+        product.name.trim().toLowerCase() === productName.toLowerCase() &&
+        product.size.trim().toLowerCase() === productSize.toLowerCase() &&
+        product.color.trim().toLowerCase() === productColor.toLowerCase()
+      );
+      const product = existingProduct || (await api.post('/products', {
+        name: productName,
+        size: productSize,
+        color: productColor,
         costPrice: Number(form.costPrice || 0),
         sellingPrice: Number(form.sellingPrice)
-      });
+      })).data;
+
       await api.post('/inventory', {
         productId: product.id,
         quantity: Number(form.stock),
-        notes: 'Initial stock added by cashier'
+        notes: existingProduct ? 'Additional stock added by cashier' : 'Initial stock added by cashier'
       });
       setForm(emptyForm);
-      setMessage('New shoe added to your store inventory.');
+      setMessage(existingProduct
+        ? 'Stock added to the existing shoe. Its current prices were kept.'
+        : 'New shoe added to your store inventory.');
       loadInventory();
     } catch (error) {
       setMessage(error.response?.data?.error || 'Unable to add shoe');
@@ -72,7 +84,7 @@ export default function CashierInventoryPage() {
   return <main className="mx-auto max-w-5xl px-4 py-6 md:px-6">
     <Card title={t('Add stock to this store')}>
       <p className="mb-5 text-sm leading-relaxed text-slate-600">
-        {t('Enter the shoe details and the number of pairs available in your store.')}
+        {t('Enter the shoe details and the number of pairs available in your store. Matching name, size, and color adds stock to the existing shoe instead of creating a duplicate.')}
       </p>
       <form onSubmit={addShoe} className="grid gap-4 md:grid-cols-2">
         <Field label={t('Shoe name')}><input className="rounded-xl border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-400" required placeholder="Classic Runner" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></Field>
@@ -82,7 +94,7 @@ export default function CashierInventoryPage() {
         <Field label={t('Cost price')}><input className="rounded-xl border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-400" min="0" step="0.01" type="number" placeholder="0.00" value={form.costPrice} onChange={(event) => setForm({ ...form, costPrice: event.target.value })} /></Field>
         <Field label={t('Stock')}><input className="rounded-xl border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-400" required min="1" type="number" placeholder="10" value={form.stock} onChange={(event) => setForm({ ...form, stock: event.target.value })} /></Field>
         <div className="md:col-span-2 flex justify-end">
-          <Button className="min-w-[180px]">{t('Add to stock')}</Button>
+          <Button className="w-full md:col-span-2">{t('Add to stock')}</Button>
         </div>
       </form>
     </Card>
@@ -105,7 +117,7 @@ export default function CashierInventoryPage() {
       </form>
     </div>}
 
-    {message && <p className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">{message}</p>}
+    {message && <p className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">{t(message)}</p>}
   </main>;
 }
 

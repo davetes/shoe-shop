@@ -1,4 +1,5 @@
 'use client';
+import { Fragment } from 'react';
 import { useEffect, useState } from 'react';
 import api from '../../../lib/api';
 import Card from '../../../components/ui/Card';
@@ -19,6 +20,7 @@ export default function CashiersPage() {
   const [message, setMessage] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [showReset, setShowReset] = useState(false);
+  const [expandedProduct, setExpandedProduct] = useState(null);
   const [accountForm, setAccountForm] = useState({ fullName: '', username: '', password: '' });
 
   function loadCashiers() {
@@ -75,14 +77,30 @@ export default function CashiersPage() {
     result.count += 1;
     result[sale.payment_method] += amount;
     sale.items.forEach((item) => {
-      const key = `${item.name} - size ${item.size} - ${item.color}`;
-      if (!result.products[key]) result.products[key] = { quantity: 0, amount: 0 };
-      result.products[key].quantity += Number(item.quantity);
-      result.products[key].amount += Number(item.quantity) * Number(item.unitPrice);
+      const key = item.productId ?? `${item.name}-${item.size}-${item.color}`;
+      if (!result.products[key]) {
+        result.products[key] = {
+          key,
+          name: item.name,
+          size: item.size,
+          color: item.color,
+          quantity: 0,
+          amount: 0,
+          cash: 0,
+          bank: 0,
+          details: [],
+        };
+      }
+      const quantity = Number(item.quantity);
+      const itemAmount = quantity * Number(item.unitPrice);
+      result.products[key].quantity += quantity;
+      result.products[key].amount += itemAmount;
+      result.products[key][sale.payment_method === 'CASH' ? 'cash' : 'bank'] += itemAmount;
+      result.products[key].details.push({ sale, item, amount: itemAmount });
     });
     return result;
   }, { total: 0, count: 0, CASH: 0, BANK_TRANSFER: 0, products: {} });
-  const productAnalysis = Object.entries(analysis.products).sort(([, first], [, second]) => second.quantity - first.quantity);
+  const productAnalysis = Object.values(analysis.products).sort((first, second) => second.quantity - first.quantity);
   return <main className="space-y-6">
     <div><h1 className="text-3xl font-bold">{t('Cashier management')}</h1><p className="text-slate-600">{t('View cashier details, sales, and account access.')}</p></div>
     <Card title="Cashiers">
@@ -105,10 +123,50 @@ export default function CashiersPage() {
           <Metric label={t('Cash revenue')} value={analysis.CASH.toFixed(2)} tone="green" />
           <Metric label={t('Bank transfer')} value={analysis.BANK_TRANSFER.toFixed(2)} tone="blue" />
           <Metric label={t('Transactions')} value={String(analysis.count)} />
-          <Metric label={t('Pairs sold')} value={String(productAnalysis.reduce((sum, [, item]) => sum + item.quantity, 0))} />
+          <Metric label={t('Pairs sold')} value={String(productAnalysis.reduce((sum, item) => sum + item.quantity, 0))} />
         </div>
       </div>
-      {!!productAnalysis.length && <div className="mb-6 rounded-lg border border-slate-200"><div className="border-b bg-slate-50 p-4"><h3 className="font-semibold">{t('Products sold')}</h3><p className="mt-1 text-sm text-slate-500">{t('Best-selling shoes for the selected cashier and period.')}</p></div><div className="overflow-auto"><table className="w-full text-left text-sm"><thead className="text-xs uppercase text-slate-500"><tr className="border-b"><th className="whitespace-nowrap p-3">{t('Product')}</th><th className="whitespace-nowrap p-3">{t('Pairs sold')}</th><th className="whitespace-nowrap p-3">{t('Revenue')}</th></tr></thead><tbody>{productAnalysis.map(([name, item]) => <tr className="border-b last:border-0" key={name}><td className="whitespace-nowrap p-3 font-medium">{name}</td><td className="whitespace-nowrap p-3">{item.quantity}</td><td className="whitespace-nowrap p-3 font-medium">{item.amount.toFixed(2)}</td></tr>)}</tbody></table></div></div>}
+      {!!productAnalysis.length && <div className="mb-6 rounded-lg border border-slate-200"><div className="border-b bg-slate-50 p-4"><h3 className="font-semibold">{t('Products sold')}</h3><p className="mt-1 text-sm text-slate-500">{t('Best-selling shoes for the selected cashier and period.')}</p></div><div className="overflow-auto"><table className="w-full text-left text-sm">
+        <thead className="text-xs uppercase text-slate-500"><tr className="border-b"><th className="whitespace-nowrap p-3">{t('Product')}</th><th className="whitespace-nowrap p-3">{t('Pairs sold')}</th><th className="whitespace-nowrap p-3">{t('Cash')}</th><th className="whitespace-nowrap p-3">{t('Bank transfer')}</th><th className="whitespace-nowrap p-3">{t('Total')}</th><th className="whitespace-nowrap p-3">{t('Details')}</th></tr></thead>
+        <tbody>{productAnalysis.map((product) => {
+          const isExpanded = expandedProduct === product.key;
+          return <Fragment key={product.key}>
+            <tr className="border-b last:border-0">
+              <td className="whitespace-nowrap p-3 font-medium">{product.name} ({product.size}, {product.color})</td>
+              <td className="whitespace-nowrap p-3">{product.quantity}</td>
+              <td className="whitespace-nowrap p-3">{product.cash.toFixed(2)}</td>
+              <td className="whitespace-nowrap p-3">{product.bank.toFixed(2)}</td>
+              <td className="whitespace-nowrap p-3 font-medium">{product.amount.toFixed(2)}</td>
+              <td className="whitespace-nowrap p-3">
+                <button
+                  type="button"
+                  aria-expanded={isExpanded}
+                  onClick={() => setExpandedProduct(isExpanded ? null : product.key)}
+                  className="font-medium text-yellow-700 underline underline-offset-2 hover:text-yellow-800"
+                >
+                  {t(isExpanded ? 'Hide details' : 'Show details')}
+                </button>
+              </td>
+            </tr>
+            {isExpanded && <tr className="border-b bg-slate-50">
+              <td colSpan="6" className="p-3">
+                <div className="overflow-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead><tr className="text-slate-500"><th className="whitespace-nowrap p-2">{t('Date')}</th><th className="whitespace-nowrap p-2">{t('Payment method')}</th><th className="whitespace-nowrap p-2">{t('Quantity')}</th><th className="whitespace-nowrap p-2">{t('Price per pair')}</th><th className="whitespace-nowrap p-2">{t('Amount')}</th></tr></thead>
+                    <tbody>{product.details.map(({ sale, item, amount }, index) => <tr className="border-t border-slate-200" key={`${sale.id}-${item.productId}-${index}`}>
+                      <td className="whitespace-nowrap p-2">{formatSaleDate(sale.created_at)}</td>
+                      <td className="whitespace-nowrap p-2"><PaymentBadge method={sale.payment_method} /></td>
+                      <td className="whitespace-nowrap p-2">{item.quantity}</td>
+                      <td className="whitespace-nowrap p-2">{Number(item.unitPrice).toFixed(2)}</td>
+                      <td className="whitespace-nowrap p-2 font-medium">{amount.toFixed(2)}</td>
+                    </tr>)}</tbody>
+                  </table>
+                </div>
+              </td>
+            </tr>}
+          </Fragment>;
+        })}</tbody>
+      </table></div></div>}
       <div className="rounded-lg border border-slate-200"><div className="border-b bg-slate-50 p-4"><h3 className="font-semibold">{t('Sale details')}</h3><p className="mt-1 text-sm text-slate-500">{t('Every sale recorded by this cashier.')}</p></div>{!sales.length ? <p className="p-4 text-sm text-slate-500">{t('No sales found for this selection.')}</p> : <div className="overflow-auto"><table className="w-full text-left text-sm"><thead className="text-xs uppercase text-slate-500"><tr className="border-b"><th className="whitespace-nowrap p-3">{t('Date')}</th><th className="whitespace-nowrap p-3">{t('Items')}</th><th className="whitespace-nowrap p-3">{t('Payment method')}</th><th className="whitespace-nowrap p-3">{t('Total')}</th></tr></thead><tbody>{sales.map((sale) => <tr className="border-b last:border-0" key={sale.id}><td className="whitespace-nowrap p-3">{formatSaleDate(sale.created_at)}</td><td className="whitespace-nowrap p-3">{sale.items.map((item) => `${item.name} x${item.quantity}`).join(', ')}</td><td className="whitespace-nowrap p-3"><PaymentBadge method={sale.payment_method} /></td><td className="whitespace-nowrap p-3 font-semibold">{Number(sale.total_amount).toFixed(2)}</td></tr>)}</tbody></table></div>}</div>
     </Card>
     {showReset && selectedCashier && <div className="fixed inset-0 z-10 flex items-center justify-center bg-slate-900/50 p-4" role="dialog" aria-modal="true" aria-labelledby="edit-account-title">
