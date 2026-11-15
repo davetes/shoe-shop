@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import api from '../../lib/api';
 import Card from '../ui/Card';
+import Button from '../ui/Button';
 import { useLanguage } from '../../lib/language';
 
 export default function OwnerDashboard({ alertsOnly = false }) {
@@ -199,12 +200,9 @@ export default function OwnerDashboard({ alertsOnly = false }) {
             <span className="pb-2 text-[13px] text-slate-400">
               {t('pairs in any store')}
             </span>
-            <button
-              type="submit"
-              className="rounded-lg border border-slate-900 bg-transparent px-4 py-2 text-[13px] font-medium text-slate-900 transition-colors hover:border-slate-600 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2"
-            >
+            <Button type="submit" className="text-[13px]">
               {t('Save')}
-            </button>
+            </Button>
           </form>
         </Card>
       )}
