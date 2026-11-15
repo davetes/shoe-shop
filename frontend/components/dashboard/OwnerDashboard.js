@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import api from '../../lib/api';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
@@ -72,21 +73,68 @@ export default function OwnerDashboard({ alertsOnly = false }) {
   }
 
   const total = data.totals.reduce((sum, row) => sum + Number(row.total), 0);
+  const cashTotal = data.totals.find((row) => row.payment_method === 'CASH');
+  const bankTotal = data.totals.find((row) => row.payment_method === 'BANK_TRANSFER');
+  const transactionCount = data.cashiers.reduce((sum, row) => sum + Number(row.sale_count), 0);
 
   return (
     <div className="space-y-6">
       {!alertsOnly && (
         <>
           {/* ── Stat grid ── */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <StatCard label={t("Today's sales")} value={total.toFixed(2)} accent />
-            {data.totals.map((row) => (
-              <StatCard
-                key={row.payment_method}
-                label={t(row.payment_method.replace('_', ' '))}
-                value={Number(row.total).toFixed(2)}
-              />
-            ))}
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <StatCard
+              label={t("Today's sales")}
+              value={total.toFixed(2)}
+              detail={t('Across all stores')}
+              tone="yellow"
+            />
+            <StatCard
+              label={t('Cash')}
+              value={Number(cashTotal?.total || 0).toFixed(2)}
+              detail={t('Paid in cash')}
+              tone="green"
+            />
+            <StatCard
+              label={t('Bank transfer')}
+              value={Number(bankTotal?.total || 0).toFixed(2)}
+              detail={t('Paid by bank transfer')}
+              tone="blue"
+            />
+            <StatCard
+              label={t('Transactions')}
+              value={String(transactionCount)}
+              detail={t('Sales recorded today')}
+            />
+          </div>
+
+          <div className={`flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between ${
+            data.alerts.length
+              ? 'border-amber-200 bg-amber-50'
+              : 'border-emerald-200 bg-emerald-50'
+          }`}>
+            <div>
+              <p className={`text-sm font-semibold ${
+                data.alerts.length ? 'text-amber-900' : 'text-emerald-900'
+              }`}>
+                {data.alerts.length ? t('Action recommended') : t('Stock looks good')}
+              </p>
+              <p className={`mt-1 text-sm ${
+                data.alerts.length ? 'text-amber-800' : 'text-emerald-800'
+              }`}>
+                {data.alerts.length
+                  ? `${data.alerts.length} ${t('products need attention across stores.')}`
+                  : t('No stock issues today.')}
+              </p>
+            </div>
+            {data.alerts.length > 0 && (
+              <Link
+                href="/dashboard/alerts"
+                className="inline-flex w-fit items-center justify-center rounded-lg border border-amber-700 px-4 py-2 text-sm font-semibold text-amber-900 transition-colors hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+              >
+                {t('Review stock alerts')}
+              </Link>
+            )}
           </div>
 
           {/* ── Cashier breakdown ── */}
@@ -96,18 +144,23 @@ export default function OwnerDashboard({ alertsOnly = false }) {
                 {data.cashiers.map((row) => (
                   <div
                     key={row.full_name}
-                    className="flex items-center justify-between gap-4 py-3"
+                    className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between"
                   >
-                    <span className="truncate text-[13px] text-slate-700">
-                      {row.full_name}
-                      <span className="ml-1.5 text-slate-400">({row.store_name})</span>
-                    </span>
-                    <span className="shrink-0 text-[13px] tabular-nums text-slate-900">
-                      <span className="font-semibold">{Number(row.total).toFixed(2)}</span>
-                      <span className="ml-1.5 text-slate-400">
-                        · {row.sale_count} {t('sales')}
-                      </span>
-                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-900">{row.full_name}</p>
+                      <p className="mt-0.5 text-xs text-slate-500">{row.store_name}</p>
+                      <p className="mt-1 text-xs tabular-nums text-slate-600">
+                        {t('Cash')}: {Number(row.cash_total).toFixed(2)}
+                        <span className="mx-2 text-slate-300">·</span>
+                        {t('Bank transfer')}: {Number(row.bank_total).toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="shrink-0 sm:text-right">
+                      <p className="text-sm font-bold tabular-nums text-slate-900">{Number(row.total).toFixed(2)}</p>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        {row.sale_count} {t('sales')}
+                      </p>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -310,25 +363,23 @@ export default function OwnerDashboard({ alertsOnly = false }) {
 }
 
 /* ───────── StatCard ───────── */
-function StatCard({ label, value, accent = false }) {
+function StatCard({ label, value, detail, tone = 'neutral' }) {
+  const tones = {
+    yellow: 'border-yellow-200 bg-yellow-50',
+    green: 'border-emerald-200 bg-emerald-50',
+    blue: 'border-blue-200 bg-blue-50',
+    neutral: 'border-slate-200 bg-white',
+  };
+
   return (
-    <div
-      className={[
-        'rounded-2xl border bg-white/80 p-5 shadow-sm shadow-slate-200/40 backdrop-blur transition-colors',
-        accent ? 'border-slate-200/90' : 'border-slate-200/70',
-      ].join(' ')}
-    >
-      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+    <div className={`rounded-2xl border p-5 shadow-sm shadow-slate-200/40 ${tones[tone]}`}>
+      <p className="text-xs font-semibold text-slate-600">
         {label}
       </p>
-      <p
-        className={[
-          'mt-2.5 text-[22px] leading-none tracking-[-0.02em] tabular-nums',
-          accent ? 'font-semibold text-slate-950' : 'font-medium text-slate-800',
-        ].join(' ')}
-      >
+      <p className="mt-2 text-2xl font-bold leading-none tracking-tight tabular-nums text-slate-950">
         {value}
       </p>
+      {detail && <p className="mt-2 text-xs text-slate-500">{detail}</p>}
     </div>
   );
 }

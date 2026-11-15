@@ -23,6 +23,9 @@ export default function DashboardPage() {
         <h1 className="mt-1.5 text-xl font-semibold leading-tight tracking-[-0.025em] text-slate-950 md:text-2xl">
           {t('Shoe Shop Overview')}
         </h1>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
+          {t("Review today's sales, cashier activity, and store stock.")}
+        </p>
       </header>
 
       <OwnerDashboard />

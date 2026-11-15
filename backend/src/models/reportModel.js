@@ -9,7 +9,9 @@ async function dashboard(date) {
   );
   const cashiers = await db.query(
     `SELECT u.full_name, s.name AS store_name, COUNT(sa.id)::int AS sale_count,
-            COALESCE(SUM(sa.total_amount), 0) AS total
+            COALESCE(SUM(sa.total_amount), 0) AS total,
+            COALESCE(SUM(CASE WHEN sa.payment_method = 'CASH' THEN sa.total_amount ELSE 0 END), 0) AS cash_total,
+            COALESCE(SUM(CASE WHEN sa.payment_method = 'BANK_TRANSFER' THEN sa.total_amount ELSE 0 END), 0) AS bank_total
      FROM users u JOIN stores s ON s.id = u.store_id LEFT JOIN sales sa
        ON sa.cashier_id = u.id AND sa.created_at >= $1::date AND sa.created_at < ($1::date + INTERVAL '1 day')
      WHERE u.role = 'CASHIER' GROUP BY u.id, u.full_name, s.name ORDER BY u.full_name`,
