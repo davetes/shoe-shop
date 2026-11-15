@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { clearSession, getUser } from '../../lib/auth';
 import { useLanguage } from '../../lib/language';
@@ -20,6 +20,7 @@ export default function AdminNav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [alertCount, setAlertCount] = useState(0);
+  const headerRef = useRef(null);
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -27,6 +28,17 @@ export default function AdminNav() {
       router.replace('/');
     }
   }, [router]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    function closeOnOutsidePointer(event) {
+      if (!headerRef.current?.contains(event.target)) setOpen(false);
+    }
+
+    document.addEventListener('pointerdown', closeOnOutsidePointer);
+    return () => document.removeEventListener('pointerdown', closeOnOutsidePointer);
+  }, [open]);
 
   useEffect(() => {
     let cancelled = false;
@@ -60,14 +72,12 @@ export default function AdminNav() {
 
   return (
     <header
-      className="fixed inset-x-0 top-0 z-40 bg-white/90 text-slate-900
-        shadow-[0_1px_10px_rgb(15_23_42_/_0.04)] backdrop-blur
-        transition-colors duration-300 after:pointer-events-none after:absolute
-        after:inset-x-0 after:bottom-0 after:h-px after:bg-gradient-to-r
-        after:from-transparent after:via-slate-300/60 after:to-transparent"
+      ref={headerRef}
+      className="fixed inset-x-0 top-0 z-40 border-b border-slate-200 bg-white text-slate-900
+        shadow-sm transition-colors duration-300"
     >
       <div className="mx-auto max-w-6xl px-4 md:px-6">
-        <div className="flex min-h-20 items-center justify-between gap-4">
+        <div className="flex min-h-16 items-center justify-between gap-4">
           <button
             className="flex shrink-0 items-center gap-2.5 text-left"
             onClick={() => router.push('/dashboard')}
@@ -165,10 +175,10 @@ function NavLink({ link, active, alertCount = 0, onNavigate }) {
   return (
     <button
       className={`relative whitespace-nowrap rounded-lg border border-transparent px-3 py-2
-        text-left text-sm transition-colors ${
+        text-left text-[15px] transition-colors ${
           active
-            ? 'font-semibold text-slate-950 after:absolute after:inset-x-3 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-slate-900'
-            : 'font-medium text-slate-600 hover:text-slate-950'
+      ? 'bg-yellow-50 font-semibold text-yellow-900 ring-1 ring-inset ring-yellow-200'
+      : 'font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950'
         }`}
       onClick={onNavigate}
     >

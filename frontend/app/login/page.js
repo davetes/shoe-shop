@@ -29,30 +29,30 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center bg-white p-4">
+    <main className="relative flex min-h-screen items-center justify-center bg-slate-50 p-4">
       <LanguageSelector className="absolute right-4 top-4" />
 
       <form
         onSubmit={submit}
-        className="w-full max-w-sm space-y-6 rounded-2xl border border-slate-200/70 bg-white p-8"
+        className="w-full max-w-sm space-y-6 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm shadow-slate-200/70"
       >
         <div>
           
           <h1 className="text-2xl font-semibold leading-tight tracking-[-0.025em] text-slate-950">
             {t('Welcome back')}
           </h1>
-          <p className="mt-1.5 text-[13px] leading-relaxed text-slate-500">
+          <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
             {t('Sign in to manage your shoe shop')}
           </p>
         </div>
 
         {error && (
-          <p className="rounded-lg border border-red-100 bg-red-50/60 px-3 py-2 text-[13px] font-medium text-red-700">
+          <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
             {error}
           </p>
         )}
 
-        <label className="block text-[13px] font-medium text-slate-700">
+        <label className="block text-sm font-medium text-slate-800">
           {t('Username')}
           <input
             type="text"
@@ -61,11 +61,11 @@ export default function LoginPage() {
             placeholder={t('Enter your username')}
             value={form.username}
             onChange={(e) => setForm({ ...form, username: e.target.value })}
-            className="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-[13px] text-slate-900 placeholder:text-slate-400 transition-colors focus-visible:outline-none focus-visible:border-slate-400"
+            className="mt-1.5 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-base text-slate-900 placeholder:text-slate-500 transition-colors focus-visible:outline-none focus-visible:border-slate-700"
           />
         </label>
 
-        <label className="block text-[13px] font-medium text-slate-700">
+        <label className="block text-sm font-medium text-slate-800">
           {t('Password')}
           <span className="relative mt-1.5 block">
             <input
@@ -75,7 +75,7 @@ export default function LoginPage() {
               placeholder={t('Enter your password')}
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 pr-12 text-[13px] text-slate-900 placeholder:text-slate-400 transition-colors focus-visible:outline-none focus-visible:border-slate-400"
+              className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 pr-12 text-base text-slate-900 placeholder:text-slate-500 transition-colors focus-visible:outline-none focus-visible:border-slate-700"
             />
             <button
               type="button"
@@ -99,9 +99,9 @@ export default function LoginPage() {
           </span>
         </label>
 
-        <Button className="w-full">{t('Sign in')}</Button>
+        <Button variant="accent" className="w-full">{t('Sign in')}</Button>
 
-        <p className="border-t border-slate-100 pt-4 text-center text-[11.5px] leading-relaxed text-slate-400">
+        <p className="border-t border-slate-200 pt-4 text-center text-xs leading-relaxed text-slate-500">
           {t('Use the username and password provided by the Owner.')}
         </p>
       </form>
