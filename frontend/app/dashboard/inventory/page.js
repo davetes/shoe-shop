@@ -1,4 +1,5 @@
 'use client';
+import { Fragment } from 'react';
 import { useEffect, useState } from 'react';
 import api from '../../../lib/api';
 import Card from '../../../components/ui/Card';
@@ -21,7 +22,37 @@ export default function InventoryPage() {
   const [showStores, setShowStores] = useState(false);
   const [message, setMessage] = useState('');
   const [sortOrder, setSortOrder] = useState('newest');
-  const sortedRows = sortInventoryRows(rows, sortOrder);
+  const [expandedStore, setExpandedStore] = useState(null);
+  const storeGroups = rows.reduce((groups, row) => {
+    if (!groups[row.store_id]) {
+      groups[row.store_id] = {
+        store_id: row.store_id,
+        store_name: row.store_name,
+        total_quantity: 0,
+        products: [],
+      };
+    }
+    groups[row.store_id].total_quantity += Number(row.quantity);
+    groups[row.store_id].products.push(row);
+    return groups;
+  }, {});
+  stores.forEach((store) => {
+    if (!storeGroups[store.id]) {
+      storeGroups[store.id] = {
+        store_id: store.id,
+        store_name: store.name,
+        total_quantity: 0,
+        products: [],
+      };
+    }
+  });
+  const groupedStores = Object.values(storeGroups);
+  const sortedStores = groupedStores.sort((first, second) =>
+    String(first.store_name).localeCompare(String(second.store_name), undefined, {
+      numeric: true,
+      sensitivity: 'base',
+    })
+  );
 
   function loadInventory() {
     api.get('/inventory')
@@ -160,7 +191,7 @@ export default function InventoryPage() {
     </Card>}
     <Card title="Inventory across stores">
       <label className="mb-3 flex w-fit items-center gap-2 text-sm font-medium text-slate-700">
-        {t('Sort shoes')}
+        {t('Sort shoes in store')}
         <select
           value={sortOrder}
           onChange={(event) => setSortOrder(event.target.value)}
@@ -172,7 +203,46 @@ export default function InventoryPage() {
           <option value="name-desc">{t('Name Z-A')}</option>
         </select>
       </label>
-      <div className="overflow-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b"><th className="whitespace-nowrap p-2">{t('Store')}</th><th className="whitespace-nowrap p-2">{t('Product')}</th><th className="whitespace-nowrap p-2">{t('Size')}</th><th className="whitespace-nowrap p-2">{t('Color')}</th><th className="whitespace-nowrap p-2">{t('Cost price')}</th><th className="whitespace-nowrap p-2">{t('Selling price')}</th><th className="whitespace-nowrap p-2">{t('Pairs')}</th><th className="whitespace-nowrap p-2">{t('Action')}</th></tr></thead><tbody>{sortedRows.map((row) => <tr className="border-b" key={`${row.store_id}-${row.product_id}`}><td className="whitespace-nowrap p-2">{row.store_name}</td><td className="whitespace-nowrap p-2">{row.name}</td><td className="whitespace-nowrap p-2">{row.size}</td><td className="whitespace-nowrap p-2">{row.color}</td><td className="whitespace-nowrap p-2">{Number(row.cost_price).toFixed(2)}</td><td className="whitespace-nowrap p-2">{Number(row.selling_price).toFixed(2)}</td><td className="whitespace-nowrap p-2">{row.quantity}</td><td className="whitespace-nowrap p-2"><button className="text-blue-700 underline" type="button" onClick={() => setEditing({ ...row })}>{t('Edit')}</button></td></tr>)}</tbody></table></div>
+      <div className="overflow-auto"><table className="w-full text-left text-sm">
+        <thead><tr className="border-b"><th className="whitespace-nowrap p-2">{t('Store')}</th><th className="whitespace-nowrap p-2">{t('Total pairs')}</th><th className="whitespace-nowrap p-2">{t('Details')}</th></tr></thead>
+        <tbody>{sortedStores.map((store) => {
+          const isExpanded = expandedStore === store.store_id;
+          return <Fragment key={store.store_id}>
+            <tr className="border-b">
+              <td className="whitespace-nowrap p-2 font-medium">{store.store_name}</td>
+              <td className="whitespace-nowrap p-2 font-medium">{store.total_quantity}</td>
+              <td className="whitespace-nowrap p-2">
+                <button
+                  type="button"
+                  aria-expanded={isExpanded}
+                  onClick={() => setExpandedStore(isExpanded ? null : store.store_id)}
+                  className="font-medium text-blue-700 underline underline-offset-2 hover:text-blue-900"
+                >
+                  {t(isExpanded ? 'Hide details' : 'Show details')}
+                </button>
+              </td>
+            </tr>
+            {isExpanded && <tr className="border-b bg-slate-50">
+              <td colSpan="3" className="p-3">
+                {!store.products.length ? <p className="p-2 text-sm text-slate-500">{t('No inventory')}</p> : <div className="overflow-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead><tr className="text-slate-500"><th className="whitespace-nowrap p-2">{t('Shoe')}</th><th className="whitespace-nowrap p-2">{t('Size')}</th><th className="whitespace-nowrap p-2">{t('Color')}</th><th className="whitespace-nowrap p-2">{t('Cost price')}</th><th className="whitespace-nowrap p-2">{t('Selling price')}</th><th className="whitespace-nowrap p-2">{t('Pairs')}</th><th className="whitespace-nowrap p-2">{t('Action')}</th></tr></thead>
+                    <tbody>{sortInventoryRows(store.products, sortOrder).map((product) => <tr className="border-t border-slate-200" key={product.product_id}>
+                      <td className="whitespace-nowrap p-2">{product.name}</td>
+                      <td className="whitespace-nowrap p-2">{product.size}</td>
+                      <td className="whitespace-nowrap p-2">{product.color}</td>
+                      <td className="whitespace-nowrap p-2">{Number(product.cost_price).toFixed(2)}</td>
+                      <td className="whitespace-nowrap p-2">{Number(product.selling_price).toFixed(2)}</td>
+                      <td className="whitespace-nowrap p-2">{product.quantity}</td>
+                      <td className="whitespace-nowrap p-2"><button className="font-medium text-blue-700 underline underline-offset-2 hover:text-blue-900" type="button" onClick={() => setEditing({ ...product })}>{t('Edit')}</button></td>
+                    </tr>)}</tbody>
+                  </table>
+                </div>}
+              </td>
+            </tr>}
+          </Fragment>;
+        })}</tbody>
+      </table></div>
     </Card>
     {editing && <div className="fixed inset-0 z-10 flex items-center justify-center bg-slate-900/50 p-4" role="dialog" aria-modal="true" aria-labelledby="admin-edit-shoe-title">
       <form onSubmit={saveEdit} className="w-full max-w-lg space-y-4 rounded-xl bg-white p-6 shadow-xl">
