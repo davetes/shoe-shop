@@ -4,6 +4,8 @@ import api from '../../../lib/api';
 import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
 import { useLanguage } from '../../../lib/language';
+import { sortInventoryRows } from '../../../lib/inventorySorting';
+import { findMatchingProduct } from '../../../lib/productMatching';
 
 const emptyForm = { name: '', size: '', color: '', costPrice: '', sellingPrice: '', stock: '' };
 
@@ -13,6 +15,8 @@ export default function CashierInventoryPage() {
   const [inventory, setInventory] = useState([]);
   const [editing, setEditing] = useState(null);
   const [message, setMessage] = useState('');
+  const [sortOrder, setSortOrder] = useState('newest');
+  const sortedInventory = sortInventoryRows(inventory, sortOrder);
 
   function loadInventory() {
     api.get('/inventory')
@@ -29,17 +33,16 @@ export default function CashierInventoryPage() {
       const productName = form.name.trim();
       const productSize = form.size.trim();
       const productColor = form.color.trim();
-      const existingProduct = products.find((product) =>
-        product.name.trim().toLowerCase() === productName.toLowerCase() &&
-        product.size.trim().toLowerCase() === productSize.toLowerCase() &&
-        product.color.trim().toLowerCase() === productColor.toLowerCase()
-      );
-      const product = existingProduct || (await api.post('/products', {
+      const productDetails = {
         name: productName,
         size: productSize,
         color: productColor,
         costPrice: Number(form.costPrice || 0),
-        sellingPrice: Number(form.sellingPrice)
+        sellingPrice: Number(form.sellingPrice),
+      };
+      const existingProduct = findMatchingProduct(products, productDetails);
+      const product = existingProduct || (await api.post('/products', {
+        ...productDetails,
       })).data;
 
       await api.post('/inventory', {
@@ -84,7 +87,7 @@ export default function CashierInventoryPage() {
   return <main className="mx-auto max-w-5xl px-4 py-6 md:px-6">
     <Card title={t('Add stock to this store')}>
       <p className="mb-5 text-sm leading-relaxed text-slate-600">
-        {t('Enter the shoe details and the number of pairs available in your store. Matching name, size, and color adds stock to the existing shoe instead of creating a duplicate.')}
+        {t('Enter the shoe details and the number of pairs available in your store. Matching name, size, color, and prices adds stock to the existing shoe; different prices create a separate shoe entry.')}
       </p>
       <form onSubmit={addShoe} className="grid gap-4 md:grid-cols-2">
         <Field label={t('Shoe name')}><input className="rounded-xl border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-400" required placeholder="Classic Runner" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></Field>
@@ -100,10 +103,25 @@ export default function CashierInventoryPage() {
     </Card>
 
     <Card title={t('Stock in this store')} className="mt-6">
-      {!inventory.length ? <p className="text-sm text-slate-500">{t('No shoes are available in this store yet.')}</p> : <div className="overflow-auto"><table className="w-full text-left text-sm">
-        <thead><tr className="border-b border-slate-200"><th className="whitespace-nowrap p-2 font-semibold text-slate-700">{t('Shoe')}</th><th className="whitespace-nowrap p-2 font-semibold text-slate-700">{t('Size')}</th><th className="whitespace-nowrap p-2 font-semibold text-slate-700">{t('Color')}</th><th className="whitespace-nowrap p-2 font-semibold text-slate-700">{t('Pairs')}</th><th className="whitespace-nowrap p-2 font-semibold text-slate-700">{t('Action')}</th></tr></thead>
-        <tbody>{inventory.map((row) => <tr className="border-b border-slate-100" key={row.product_id}><td className="whitespace-nowrap p-2 text-slate-800">{row.name}</td><td className="whitespace-nowrap p-2 text-slate-800">{row.size}</td><td className="whitespace-nowrap p-2 text-slate-800">{row.color}</td><td className="whitespace-nowrap p-2 text-slate-800">{row.quantity}</td><td className="whitespace-nowrap p-2"><button className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900" type="button" onClick={() => beginEdit({ ...row })}>{t('Edit')}</button></td></tr>)}</tbody>
-      </table></div>}
+      {!inventory.length ? <p className="text-sm text-slate-500">{t('No shoes are available in this store yet.')}</p> : <>
+        <label className="mb-3 flex w-fit items-center gap-2 text-sm font-medium text-slate-700">
+          {t('Sort shoes')}
+          <select
+            value={sortOrder}
+            onChange={(event) => setSortOrder(event.target.value)}
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-normal text-slate-800 outline-none transition focus-visible:ring-2 focus-visible:ring-yellow-500"
+          >
+            <option value="newest">{t('Newest first')}</option>
+            <option value="oldest">{t('Oldest first')}</option>
+            <option value="name-asc">{t('Name A-Z')}</option>
+            <option value="name-desc">{t('Name Z-A')}</option>
+          </select>
+        </label>
+        <div className="overflow-auto"><table className="w-full text-left text-sm">
+        <thead><tr className="border-b border-slate-200"><th className="whitespace-nowrap p-2 font-semibold text-slate-700">{t('Shoe')}</th><th className="whitespace-nowrap p-2 font-semibold text-slate-700">{t('Size')}</th><th className="whitespace-nowrap p-2 font-semibold text-slate-700">{t('Color')}</th><th className="whitespace-nowrap p-2 font-semibold text-slate-700">{t('Cost price')}</th><th className="whitespace-nowrap p-2 font-semibold text-slate-700">{t('Selling price')}</th><th className="whitespace-nowrap p-2 font-semibold text-slate-700">{t('Pairs')}</th><th className="whitespace-nowrap p-2 font-semibold text-slate-700">{t('Action')}</th></tr></thead>
+        <tbody>{sortedInventory.map((row) => <tr className="border-b border-slate-100" key={row.product_id}><td className="whitespace-nowrap p-2 text-slate-800">{row.name}</td><td className="whitespace-nowrap p-2 text-slate-800">{row.size}</td><td className="whitespace-nowrap p-2 text-slate-800">{row.color}</td><td className="whitespace-nowrap p-2 text-slate-800">{Number(row.cost_price).toFixed(2)}</td><td className="whitespace-nowrap p-2 text-slate-800">{Number(row.selling_price).toFixed(2)}</td><td className="whitespace-nowrap p-2 text-slate-800">{row.quantity}</td><td className="whitespace-nowrap p-2"><button className="font-medium text-blue-700 underline underline-offset-2 hover:text-blue-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2" type="button" onClick={() => beginEdit({ ...row })}>{t('Edit')}</button></td></tr>)}</tbody>
+      </table></div>
+      </>}
     </Card>
 
     {editing && <div className="fixed inset-0 z-10 flex items-center justify-center bg-slate-900/50 p-4" role="dialog" aria-modal="true" aria-labelledby="edit-shoe-title">

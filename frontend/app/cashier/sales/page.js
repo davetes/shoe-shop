@@ -17,7 +17,10 @@ export default function SalesPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const selectedProduct = products.find((product) => String(product.product_id) === productId);
-  const visibleProducts = products.filter((product) => `${product.name} ${product.size} ${product.color}`.toLowerCase().includes(productSearch.toLowerCase()));
+  const visibleProducts = products.filter((product) =>
+    Number(product.quantity) > 0 &&
+    `${product.name} ${product.size} ${product.color}`.toLowerCase().includes(productSearch.toLowerCase())
+  );
   useEffect(() => {
     api.get('/inventory')
       .then(({ data }) => {

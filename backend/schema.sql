@@ -29,9 +29,11 @@ CREATE TABLE products (
   color VARCHAR(60) NOT NULL,
   cost_price NUMERIC(12, 2) NOT NULL CHECK (cost_price >= 0),
   selling_price NUMERIC(12, 2) NOT NULL CHECK (selling_price >= 0),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  UNIQUE (name, size, color)
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE UNIQUE INDEX products_variant_price_unique
+  ON products (name, size, color, cost_price, selling_price);
 
 CREATE TABLE inventory (
   store_id INTEGER NOT NULL REFERENCES stores(id) ON DELETE CASCADE,

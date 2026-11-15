@@ -4,6 +4,8 @@ import api from '../../../lib/api';
 import Card from '../../../components/ui/Card';
 import Button from '../../../components/ui/Button';
 import { useLanguage } from '../../../lib/language';
+import { sortInventoryRows } from '../../../lib/inventorySorting';
+import { findMatchingProduct } from '../../../lib/productMatching';
 
 const emptyForm = { name: '', size: '', color: '', costPrice: '', sellingPrice: '', stock: '', storeId: '1' };
 
@@ -18,6 +20,8 @@ export default function InventoryPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [showStores, setShowStores] = useState(false);
   const [message, setMessage] = useState('');
+  const [sortOrder, setSortOrder] = useState('newest');
+  const sortedRows = sortInventoryRows(rows, sortOrder);
 
   function loadInventory() {
     api.get('/inventory')
@@ -38,21 +42,26 @@ export default function InventoryPage() {
   async function createShoe(event) {
     event.preventDefault();
     try {
-      const { data: product } = await api.post('/products', {
-        name: form.name,
-        size: form.size,
-        color: form.color,
+      const { data: products } = await api.get('/products');
+      const productDetails = {
+        name: form.name.trim(),
+        size: form.size.trim(),
+        color: form.color.trim(),
         costPrice: Number(form.costPrice || 0),
         sellingPrice: Number(form.sellingPrice)
-      });
+      };
+      const existingProduct = findMatchingProduct(products, productDetails);
+      const product = existingProduct || (await api.post('/products', productDetails)).data;
       await api.post('/inventory', {
         productId: product.id,
         storeId: Number(form.storeId),
         quantity: Number(form.stock),
-        notes: 'Initial stock'
+        notes: existingProduct ? 'Additional stock added to existing shoe' : 'Initial stock'
       });
       setForm({ ...emptyForm, storeId: form.storeId });
-      setMessage('Shoe created and initial stock added.');
+      setMessage(existingProduct
+        ? 'Stock added to the existing shoe. Its current prices were kept.'
+        : 'Shoe created and initial stock added.');
       loadInventory();
     } catch (error) {
       setMessage(error.response?.data?.error || 'Unable to create shoe');
@@ -139,7 +148,7 @@ export default function InventoryPage() {
         <Field label={t('Store')}><select className="rounded border p-2" value={form.storeId} onChange={(event) => setForm({ ...form, storeId: event.target.value })}>{stores.map((store) => <option key={store.id} value={store.id}>{store.name}</option>)}</select></Field>
         <Button>{t('Add shoe')}</Button>
       </form>
-      {message && <p className="mt-3 text-sm">{message}</p>}
+      {message && <p className="mt-3 text-sm">{t(message)}</p>}
     </Card>}
     {showStores && <Card title="Store management">
       <form onSubmit={createStore} className="mb-4 flex flex-wrap items-end gap-3 rounded-lg bg-slate-50 p-3">
@@ -150,7 +159,20 @@ export default function InventoryPage() {
       <div className="overflow-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b"><th className="whitespace-nowrap p-2">{t('Store')}</th><th className="whitespace-nowrap p-2">{t('Alert threshold')}</th><th className="whitespace-nowrap p-2">{t('Action')}</th></tr></thead><tbody>{stores.map((store) => <tr className="border-b" key={store.id}><td className="whitespace-nowrap p-2">{editingStore?.id === store.id ? <input className="rounded border p-1" value={editingStore.name} onChange={(event) => setEditingStore({ ...editingStore, name: event.target.value })} /> : store.name}</td><td className="whitespace-nowrap p-2">{editingStore?.id === store.id ? <input className="w-24 rounded border p-1" min="0" type="number" value={editingStore.low_stock_threshold} onChange={(event) => setEditingStore({ ...editingStore, low_stock_threshold: event.target.value })} /> : store.low_stock_threshold}</td><td className="whitespace-nowrap p-2">{editingStore?.id === store.id ? <div className="flex gap-2"><button className="text-blue-700 underline" type="button" onClick={saveStore}>{t('Save')}</button><button className="text-slate-600 underline" type="button" onClick={() => setEditingStore(null)}>{t('Cancel')}</button></div> : <button className="text-blue-700 underline" type="button" onClick={() => setEditingStore({ ...store })}>{t('Edit')}</button>}</td></tr>)}</tbody></table></div>
     </Card>}
     <Card title="Inventory across stores">
-      <div className="overflow-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b"><th className="whitespace-nowrap p-2">{t('Store')}</th><th className="whitespace-nowrap p-2">{t('Product')}</th><th className="whitespace-nowrap p-2">{t('Size')}</th><th className="whitespace-nowrap p-2">{t('Color')}</th><th className="whitespace-nowrap p-2">{t('Pairs')}</th><th className="whitespace-nowrap p-2">{t('Action')}</th></tr></thead><tbody>{rows.map((row) => <tr className="border-b" key={`${row.store_id}-${row.product_id}`}><td className="whitespace-nowrap p-2">{row.store_name}</td><td className="whitespace-nowrap p-2">{row.name}</td><td className="whitespace-nowrap p-2">{row.size}</td><td className="whitespace-nowrap p-2">{row.color}</td><td className="whitespace-nowrap p-2">{row.quantity}</td><td className="whitespace-nowrap p-2"><button className="text-blue-700 underline" type="button" onClick={() => setEditing({ ...row })}>{t('Edit')}</button></td></tr>)}</tbody></table></div>
+      <label className="mb-3 flex w-fit items-center gap-2 text-sm font-medium text-slate-700">
+        {t('Sort shoes')}
+        <select
+          value={sortOrder}
+          onChange={(event) => setSortOrder(event.target.value)}
+          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-normal text-slate-800 outline-none transition focus-visible:ring-2 focus-visible:ring-yellow-500"
+        >
+          <option value="newest">{t('Newest first')}</option>
+          <option value="oldest">{t('Oldest first')}</option>
+          <option value="name-asc">{t('Name A-Z')}</option>
+          <option value="name-desc">{t('Name Z-A')}</option>
+        </select>
+      </label>
+      <div className="overflow-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b"><th className="whitespace-nowrap p-2">{t('Store')}</th><th className="whitespace-nowrap p-2">{t('Product')}</th><th className="whitespace-nowrap p-2">{t('Size')}</th><th className="whitespace-nowrap p-2">{t('Color')}</th><th className="whitespace-nowrap p-2">{t('Cost price')}</th><th className="whitespace-nowrap p-2">{t('Selling price')}</th><th className="whitespace-nowrap p-2">{t('Pairs')}</th><th className="whitespace-nowrap p-2">{t('Action')}</th></tr></thead><tbody>{sortedRows.map((row) => <tr className="border-b" key={`${row.store_id}-${row.product_id}`}><td className="whitespace-nowrap p-2">{row.store_name}</td><td className="whitespace-nowrap p-2">{row.name}</td><td className="whitespace-nowrap p-2">{row.size}</td><td className="whitespace-nowrap p-2">{row.color}</td><td className="whitespace-nowrap p-2">{Number(row.cost_price).toFixed(2)}</td><td className="whitespace-nowrap p-2">{Number(row.selling_price).toFixed(2)}</td><td className="whitespace-nowrap p-2">{row.quantity}</td><td className="whitespace-nowrap p-2"><button className="text-blue-700 underline" type="button" onClick={() => setEditing({ ...row })}>{t('Edit')}</button></td></tr>)}</tbody></table></div>
     </Card>
     {editing && <div className="fixed inset-0 z-10 flex items-center justify-center bg-slate-900/50 p-4" role="dialog" aria-modal="true" aria-labelledby="admin-edit-shoe-title">
       <form onSubmit={saveEdit} className="w-full max-w-lg space-y-4 rounded-xl bg-white p-6 shadow-xl">

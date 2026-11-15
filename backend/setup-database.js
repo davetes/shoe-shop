@@ -35,6 +35,8 @@ async function setupDatabase() {
       console.log('Removed email from existing accounts.');
     }
 
+    await applyMigration(client, '003_product_price_variants.sql');
+
     console.log('Database schema is ready.');
   } finally {
     if (client) client.release();

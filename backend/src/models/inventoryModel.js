@@ -9,6 +9,7 @@ async function listInventory(storeId) {
   }
   const result = await db.query(
     `SELECT i.store_id, s.name AS store_name, i.product_id, p.name, p.size, p.color,
+            p.created_at AS product_created_at,
             p.cost_price, p.selling_price, i.quantity, s.low_stock_threshold
      FROM inventory i JOIN stores s ON s.id = i.store_id
      JOIN products p ON p.id = i.product_id ${filter}

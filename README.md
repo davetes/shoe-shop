@@ -14,6 +14,8 @@ npm install
 npm run setup:db
 ```
 
+Shoe variants are distinguished by name, size, color, cost price, and selling price. Adding the same variant and prices increases its store stock; using different prices creates a separate variant. Run `npm run setup:db` on existing installations to apply this change.
+
 The schema seeds three cashier accounts. They sign in with these usernames:
 
 - `cashier1`, `cashier2`, and `cashier3` / `cashier123`
